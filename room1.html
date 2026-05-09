@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room 1 - Living Room</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="escape-room.js"></script>
+  </head>
+  <body data-room="1">
+    <main class="game-layout">
+      <section class="room-stage" aria-labelledby="room-title">
+        <div class="room-header">
+          <div>
+            <p class="eyebrow">Room 1 of 6</p>
+            <h1 id="room-title">Living Room</h1>
+          </div>
+          <nav class="room-nav" aria-label="Room progression">
+            <a class="room-link active" href="room1.html">1</a>
+            <a class="room-link locked" href="room2.html" aria-disabled="true">2</a>
+            <a class="room-link locked" href="room3.html" aria-disabled="true">3</a>
+            <a class="room-link locked" href="room4.html" aria-disabled="true">4</a>
+            <a class="room-link locked" href="room5.html" aria-disabled="true">5</a>
+            <a class="room-link locked" href="room6.html" aria-disabled="true">6</a>
+          </nav>
+        </div>
+
+        <div class="room-canvas" aria-label="Clickable living room objects">
+          <button class="room-object couch" data-object="couch">Couch</button>
+          <button class="room-object tv" data-object="tv">TV</button>
+          <button class="room-object coffee-table" data-object="coffeeTable">Coffee table</button>
+          <button class="room-object keys" data-object="keys">Keys</button>
+          <button class="room-object combination-lock" data-object="combinationLock">Combo lock</button>
+          <button class="room-object keyhole" data-object="keyhole">Keyhole</button>
+          <button class="room-object bookshelf" data-object="bookshelf">Bookshelf</button>
+          <button class="room-object painting" data-object="painting">Painting</button>
+          <button class="room-object exit-door" data-object="exitDoor">Exit door</button>
+        </div>
+      </section>
+
+      <aside class="side-panel" aria-label="Object popup and inventory">
+        <section class="popup-card" id="object-panel">
+          <p class="eyebrow">Selected object</p>
+          <h2 id="object-name">Nothing selected</h2>
+          <p id="object-description">Click a rectangle in the room to open its popup description here.</p>
+          <div class="action-row" id="object-actions" aria-label="Available actions"></div>
+          <div class="status-message" id="status-message" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="inventory-card">
+          <div class="panel-heading">
+            <p class="eyebrow">Inventory</p>
+            <button class="ghost-button" id="reset-progress" type="button">Reset</button>
+          </div>
+          <div class="inventory-list" id="inventory-list"></div>
+          <p class="hint">Tip: select an object, then choose an inventory item action to try it.</p>
+        </section>
+      </aside>
+    </main>
+  </body>
+</html>

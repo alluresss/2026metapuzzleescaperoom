@@ -375,3 +375,301 @@ h2 {
     min-height: 30rem;
   }
 }
+
+.room-1-canvas {
+  background:
+    linear-gradient(180deg, #253a56 0 45%, #2f5d43 45% 58%, #6d4a32 58% 100%),
+    repeating-linear-gradient(90deg, transparent 0 4rem, rgba(255, 255, 255, 0.04) 4rem 4.1rem);
+}
+
+.room-2-canvas {
+  background: linear-gradient(180deg, #8fb5c7 0 58%, #d8d3c8 58% 100%);
+}
+
+.room-3-canvas {
+  background: linear-gradient(180deg, #6f7f58 0 58%, #6b4a33 58% 100%);
+}
+
+.room-4-canvas {
+  background: linear-gradient(180deg, #31415e 0 58%, #5b3f2c 58% 100%);
+}
+
+.room-5-canvas {
+  background: linear-gradient(180deg, #4d3f67 0 58%, #4a3347 58% 100%);
+}
+
+.room-6-canvas {
+  background: linear-gradient(180deg, #202633 0 58%, #2b2925 58% 100%);
+}
+
+.porch-chair {
+  left: 8%;
+  bottom: 17%;
+  width: 20%;
+  height: 22%;
+  background: #8b5f3d;
+}
+
+.doorbell {
+  right: 22%;
+  bottom: 47%;
+  width: 8%;
+  height: 9%;
+  background: #d7a33f;
+}
+
+.doormat {
+  left: 47%;
+  bottom: 10%;
+  width: 22%;
+  height: 9%;
+  background: #6f4b2e;
+  color: #ffe2bf;
+}
+
+.front-door {
+  right: 9%;
+  bottom: 13%;
+  width: 18%;
+  height: 47%;
+  background: #51331f;
+  color: #ffe5c7;
+}
+
+.outside-keypad {
+  right: 4%;
+  bottom: 36%;
+  width: 8%;
+  height: 13%;
+  background: #111722;
+  color: #d9e7ff;
+}
+
+.towel {
+  left: 9%;
+  top: 12%;
+  width: 16%;
+  height: 15%;
+  background: #f0ede5;
+}
+
+.toothbrush {
+  left: 35%;
+  top: 22%;
+  width: 12%;
+  height: 7%;
+  background: #79d2de;
+}
+
+.toilet-shower {
+  right: 8%;
+  bottom: 15%;
+  width: 25%;
+  height: 34%;
+  background: #e8edf2;
+}
+
+.garbage-can {
+  left: 14%;
+  bottom: 14%;
+  width: 14%;
+  height: 18%;
+  background: #6f7785;
+}
+
+.bathroom-box {
+  left: 29%;
+  bottom: 17%;
+  width: 13%;
+  height: 10%;
+  background: #384154;
+  color: #d9e7ff;
+}
+
+.bathroom-drawer {
+  left: 42%;
+  bottom: 28%;
+  width: 18%;
+  height: 15%;
+  background: #7b6b5a;
+}
+
+.bathroom-door {
+  right: 2%;
+  bottom: 13%;
+  width: 12%;
+  height: 42%;
+  background: #504238;
+  color: #ffe5c7;
+}
+
+.refrigerator {
+  left: 5%;
+  bottom: 13%;
+  width: 20%;
+  height: 47%;
+  background: #dce7ed;
+}
+
+.pots-pans {
+  left: 32%;
+  bottom: 16%;
+  width: 22%;
+  height: 16%;
+  background: #a6aab3;
+}
+
+.microwave {
+  right: 29%;
+  top: 20%;
+  width: 19%;
+  height: 15%;
+  background: #232938;
+  color: #d9e7ff;
+}
+
+.recipe-book {
+  right: 8%;
+  bottom: 25%;
+  width: 18%;
+  height: 11%;
+  background: #d9c58d;
+}
+
+.kitchen-box {
+  left: 43%;
+  bottom: 34%;
+  width: 12%;
+  height: 10%;
+  background: #303744;
+  color: #d9e7ff;
+}
+
+.red-button {
+  right: 13%;
+  bottom: 45%;
+  width: 11%;
+  height: 11%;
+  border-radius: 50%;
+  background: #cc2936;
+  color: #fff5f5;
+}
+
+.living-tv {
+  right: 10%;
+  top: 12%;
+  width: 22%;
+  height: 17%;
+  background: #182235;
+  color: #d9e7ff;
+}
+
+.living-couch {
+  left: 7%;
+  bottom: 12%;
+  width: 31%;
+  height: 17%;
+  background: #9b4f5e;
+}
+
+.living-drawers {
+  right: 11%;
+  bottom: 16%;
+  width: 20%;
+  height: 19%;
+  background: #77543a;
+}
+
+.old-books {
+  left: 7%;
+  top: 12%;
+  width: 22%;
+  height: 20%;
+  background: #7b5136;
+}
+
+.floor-key {
+  left: 53%;
+  bottom: 18%;
+  width: 10%;
+  height: 6%;
+  background: #f5cd62;
+}
+
+.living-door {
+  right: 2%;
+  bottom: 12%;
+  width: 11%;
+  height: 40%;
+  background: #5b3725;
+  color: #ffe5c7;
+}
+
+.nightstand {
+  left: 9%;
+  bottom: 16%;
+  width: 17%;
+  height: 18%;
+  background: #7a563b;
+}
+
+.computer {
+  right: 10%;
+  bottom: 21%;
+  width: 22%;
+  height: 20%;
+  background: #162033;
+  color: #d9e7ff;
+}
+
+.bed {
+  left: 32%;
+  bottom: 13%;
+  width: 30%;
+  height: 24%;
+  background: #8f6aa6;
+}
+
+.alarm-clock {
+  left: 18%;
+  bottom: 38%;
+  width: 12%;
+  height: 8%;
+  background: #111722;
+  color: #ffcf73;
+}
+
+.lamp {
+  left: 5%;
+  top: 13%;
+  width: 14%;
+  height: 24%;
+  background: #f4d081;
+}
+
+.keyholes {
+  left: 23%;
+  top: 25%;
+  width: 54%;
+  height: 18%;
+  background: #111722;
+  color: #f4d081;
+}
+
+.basement-door {
+  right: 8%;
+  bottom: 12%;
+  width: 18%;
+  height: 42%;
+  background: #36312b;
+  color: #d7c3a1;
+}
+
+.wall-markings {
+  left: 8%;
+  top: 13%;
+  width: 18%;
+  height: 13%;
+  background: #4f5663;
+  color: #ffcf73;
+}

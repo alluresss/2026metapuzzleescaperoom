@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Room 1 - Living Room</title>
+    <title>Room 1 - Outside the House</title>
     <link rel="stylesheet" href="styles.css" />
     <script defer src="escape-room.js"></script>
   </head>
@@ -13,7 +13,7 @@
         <div class="room-header">
           <div>
             <p class="eyebrow">Room 1 of 6</p>
-            <h1 id="room-title">Living Room</h1>
+            <h1 id="room-title">Outside the House</h1>
           </div>
           <nav class="room-nav" aria-label="Room progression">
             <a class="room-link active" href="room1.html">1</a>
@@ -25,16 +25,12 @@
           </nav>
         </div>
 
-        <div class="room-canvas" aria-label="Clickable living room objects">
-          <button class="room-object couch" data-object="couch">Couch</button>
-          <button class="room-object tv" data-object="tv">TV</button>
-          <button class="room-object coffee-table" data-object="coffeeTable">Coffee table</button>
-          <button class="room-object keys" data-object="keys">Keys</button>
-          <button class="room-object combination-lock" data-object="combinationLock">Combo lock</button>
-          <button class="room-object keyhole" data-object="keyhole">Keyhole</button>
-          <button class="room-object bookshelf" data-object="bookshelf">Bookshelf</button>
-          <button class="room-object painting" data-object="painting">Painting</button>
-          <button class="room-object exit-door" data-object="exitDoor">Exit door</button>
+        <div class="room-canvas room-1-canvas" aria-label="Clickable outside-house objects">
+          <button class="room-object porch-chair" data-object="porchChair">Porch chair</button>
+          <button class="room-object doorbell" data-object="doorbell">Doorbell</button>
+          <button class="room-object doormat" data-object="doormat">Doormat</button>
+          <button class="room-object front-door" data-object="frontDoor">Locked door</button>
+          <button class="room-object outside-keypad" data-object="outsideKeypad">Keypad</button>
         </div>
       </section>
 

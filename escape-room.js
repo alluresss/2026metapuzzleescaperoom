@@ -33,7 +33,7 @@ const roomData = {
         name: "Numerical Keypad",
         description: "A six-digit keypad. At first, the keys refuse to accept input.",
         inspect: "Before five doorbell rings, it stays dark. Afterward, it waits for a six-digit code.",
-        customActions: [{ label: "Enter 517125", type: "room1-keypad" }],
+        customActions: [{ label: "Enter code", type: "room1-keypad", input: { placeholder: "6-digit code", answer: "517125", inputMode: "numeric" } }],
       },
     },
   },
@@ -65,20 +65,21 @@ const roomData = {
       },
       bathroomBox: {
         name: "Small Locked Box",
-        description: "A small lockbox recovered from the garbage can. Its lock looks gold-key sized.",
+        description: "A small lockbox found inside the garbage can. Its lock looks gold-key sized.",
         inspect: "The box needs a small gold key.",
+        visibleWhen: { flag: "bathroomBoxFound" },
       },
       bathroomDrawer: {
         name: "Locked Drawer",
         description: "A drawer under the sink is sealed by a letter combination lock.",
         inspect: "The six-letter lock is ready for a word. The airplane figurine suggests AIRBUS.",
-        customActions: [{ label: "Enter AIRBUS", type: "room2-drawer" }],
+        customActions: [{ label: "Enter word", type: "room2-drawer", input: { placeholder: "6-letter word", answer: "AIRBUS" } }],
       },
       bathroomDoor: {
         name: "Number-Locked Door",
         description: "The way onward is blocked by a six-digit number combination lock.",
         inspect: "The lock needs the hidden number from the revealed note.",
-        customActions: [{ label: "Enter 628976", type: "room2-door" }],
+        customActions: [{ label: "Enter code", type: "room2-door", input: { placeholder: "6-digit code", answer: "628976", inputMode: "numeric" } }],
       },
     },
   },
@@ -102,7 +103,7 @@ const roomData = {
         name: "Microwave",
         description: "An old microwave with a numeric timer.",
         inspect: "It is waiting for a cooking time. The recipe book says to microwave for some amount of time.",
-        customActions: [{ label: "Microwave butter for 124315 seconds", type: "room3-microwave" }],
+        customActions: [{ label: "Set microwave time", type: "room3-microwave", input: { placeholder: "seconds", answer: "124315", inputMode: "numeric" } }],
       },
       recipeBook: {
         name: "Recipe Book",
@@ -113,11 +114,13 @@ const roomData = {
         name: "Locked Box",
         description: "A metal box hidden inside the pots and pans.",
         inspect: "The box is labelled 7 and needs the matching key.",
+        visibleWhen: { flag: "kitchenBoxFound" },
       },
       redButton: {
         name: "Red Button",
         description: "A red button sits inside the opened lockbox.",
         inspect: "Pressing it should release the kitchen exit.",
+        visibleWhen: { flag: "boxOpen" },
         customActions: [{ label: "Press red button", type: "room3-button" }],
       },
     },
@@ -141,7 +144,7 @@ const roomData = {
         name: "Combination Drawers",
         description: "A bank of drawers protected by a four-digit combination lock.",
         inspect: "The drawers need the code derived from the invisible annotations in the two old books.",
-        customActions: [{ label: "Enter 2651", type: "room4-drawers" }],
+        customActions: [{ label: "Enter combination", type: "room4-drawers", input: { placeholder: "4-digit code", answer: "2651", inputMode: "numeric" } }],
       },
       oldBooks: {
         name: "Two Old Books",
@@ -152,6 +155,7 @@ const roomData = {
         name: "Key on the Ground",
         description: "Once the TV lights up, a glint appears on the ground: a key labelled 4.",
         inspect: "The key was impossible to notice before the TV and lights came on.",
+        visibleWhen: { flag: "tvLit" },
         pickup: { item: "key 4", label: "Pick up key 4" },
       },
       livingDoor: {
@@ -170,13 +174,13 @@ const roomData = {
         name: "Nightstand Drawers",
         description: "The nightstand drawers are locked with a three-digit combination.",
         inspect: "A nearby phone shows 6:07. The alarm clock can reveal another time; subtract 345 from 607 to get 262.",
-        customActions: [{ label: "Enter 262", type: "room5-nightstand" }],
+        customActions: [{ label: "Enter combination", type: "room5-nightstand", input: { placeholder: "3-digit code", answer: "262", inputMode: "numeric" } }],
       },
       computer: {
         name: "Locked Computer",
         description: "A computer login screen blocks the electrical door controls.",
         inspect: "It asks for a username and password. A hidden note gives the username; previous puzzle answers point to OVERRIDE.",
-        customActions: [{ label: "Login admin / OVERRIDE", type: "room5-computer" }],
+        customActions: [{ label: "Log in", type: "room5-computer", input: { placeholder: "username / password", answer: "admin / OVERRIDE" } }],
       },
       bed: {
         name: "Bed",
@@ -230,6 +234,7 @@ const defaultState = {
 
 let state = loadState();
 let selectedObjectId = null;
+let selectedInventoryItem = null;
 
 function loadState() {
   const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -240,7 +245,7 @@ function loadState() {
   const parsed = JSON.parse(saved);
   const merged = structuredClone(defaultState);
   merged.unlockedRoom = parsed.unlockedRoom || 1;
-  merged.inventory = parsed.inventory || [];
+  merged.inventory = (parsed.inventory || []).filter((item) => !["brass key", "square key"].includes(item));
 
   Object.keys(merged.rooms).forEach((roomKey) => {
     merged.rooms[roomKey] = { ...merged.rooms[roomKey], ...(parsed.rooms?.[roomKey] || parsed[roomKey] || {}) };
@@ -279,6 +284,8 @@ function initialisePage() {
 
   if (document.querySelector(".room-canvas")) {
     wireRoomObjects();
+    ensureInventoryInspector();
+    renderVisibleObjects();
     renderInventory();
     wireResetButton();
     setStatus(currentRoom().startStatus);
@@ -314,9 +321,61 @@ function showLockedRoom() {
   setStatus(message, true);
 }
 
+
+function ensureInventoryInspector() {
+  const sidePanel = document.querySelector(".side-panel");
+  if (!sidePanel || document.getElementById("inventory-inspector")) {
+    return;
+  }
+
+  const panel = document.createElement("section");
+  panel.className = "popup-card inventory-inspector hidden";
+  panel.id = "inventory-inspector";
+  panel.innerHTML = `
+    <div class="panel-heading">
+      <p class="eyebrow">Inventory object</p>
+      <button class="ghost-button" id="close-inventory-inspector" type="button">Close</button>
+    </div>
+    <h2 id="inventory-object-name">Nothing selected</h2>
+    <p id="inventory-object-description">Click an inventory item to inspect it here, then click a room object to try using the item on that object.</p>
+    <div class="action-row" id="inventory-object-actions" aria-label="Inventory object actions"></div>
+  `;
+  sidePanel.insertBefore(panel, sidePanel.firstElementChild);
+  document.getElementById("close-inventory-inspector").addEventListener("click", () => {
+    selectedInventoryItem = null;
+    renderInventory();
+    renderInventoryInspector();
+  });
+}
+
+function renderVisibleObjects() {
+  document.querySelectorAll(".room-object").forEach((button) => {
+    const object = currentRoom().objects[button.dataset.object];
+    const visible = !object?.visibleWhen || Boolean(currentRoomState().flags[object.visibleWhen.flag]);
+    button.hidden = !visible;
+    button.disabled = !visible;
+  });
+}
+
+function isObjectVisible(objectId) {
+  const object = currentRoom().objects[objectId];
+  return !object?.visibleWhen || Boolean(currentRoomState().flags[object.visibleWhen.flag]);
+}
+
 function wireRoomObjects() {
   document.querySelectorAll(".room-object").forEach((button) => {
-    button.addEventListener("click", () => selectObject(button.dataset.object));
+    button.addEventListener("click", () => {
+      if (selectedInventoryItem) {
+        selectedObjectId = button.dataset.object;
+        document.querySelectorAll(".room-object").forEach((roomButton) => {
+          roomButton.classList.toggle("selected", roomButton.dataset.object === selectedObjectId);
+        });
+        renderInventoryInspector();
+        useItemOnObject(selectedInventoryItem, button.dataset.object);
+        return;
+      }
+      selectObject(button.dataset.object);
+    });
   });
 }
 
@@ -325,17 +384,24 @@ function wireResetButton() {
     state = structuredClone(defaultState);
     saveState();
     selectedObjectId = null;
+    selectedInventoryItem = null;
     document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
     document.getElementById("object-name").textContent = "Nothing selected";
     document.getElementById("object-description").textContent = "Click a rectangle in the room to open its popup description here.";
     document.getElementById("object-actions").replaceChildren();
+    renderVisibleObjects();
     renderInventory();
+    renderInventoryInspector();
     updateRoomLocks();
     setStatus("Progress reset. Start again outside the house.");
   });
 }
 
 function selectObject(objectId) {
+  if (!isObjectVisible(objectId)) {
+    setStatus("Inspect nearby objects to discover that hidden item first.", true);
+    return;
+  }
   selectedObjectId = objectId;
   const object = currentRoom().objects[objectId];
 
@@ -346,6 +412,7 @@ function selectObject(objectId) {
   document.getElementById("object-name").textContent = object.name;
   document.getElementById("object-description").textContent = object.description;
   renderActions(objectId);
+  renderInventoryInspector();
   setStatus("Choose an action below.");
 }
 
@@ -357,21 +424,92 @@ function renderActions(objectId) {
   actions.append(createActionButton("Inspect", () => inspectObject(objectId), true));
 
   if (object.pickup && canPickup(objectId, object.pickup.item)) {
-    actions.append(createActionButton(object.pickup.label || `Pick up ${object.pickup.item}`, () => collectItem(object.pickup.item)));
+    actions.append(createActionButton(object.pickup.label || `Take ${object.pickup.item}`, () => collectItem(object.pickup.item)));
   }
 
-  object.customActions?.forEach((action) => {
-    actions.append(createActionButton(action.label, () => runCustomAction(action.type)));
+  getFoundObjectAction(objectId)?.forEach((action) => {
+    actions.append(createActionButton(action.label, action.onClick));
   });
 
-  state.inventory.forEach((item) => {
-    actions.append(createActionButton(`Use ${item}`, () => useItemOnObject(item, objectId)));
+  object.customActions?.forEach((action) => {
+    if (action.input) {
+      actions.append(createInputAction(action));
+      return;
+    }
+
+    actions.append(createActionButton(action.label, () => runCustomAction(action.type)));
   });
+}
+
+
+function getFoundObjectAction(objectId) {
+  const roomState = currentRoomState();
+  if (!roomState.flags[`inspected_${objectId}`]) {
+    return null;
+  }
+
+  if (currentRoomNumber() === 2 && objectId === "garbageCan" && !roomState.flags.bathroomBoxFound) {
+    return [{ label: "Take out small locked box", onClick: () => revealHiddenObject("bathroomBoxFound", "You take the small locked box out of the garbage can.") }];
+  }
+
+  if (currentRoomNumber() === 3 && objectId === "potsPans" && !roomState.flags.kitchenBoxFound) {
+    return [{ label: "Pull out locked box", onClick: () => revealHiddenObject("kitchenBoxFound", "You pull the labelled locked box out from behind the pots and pans.") }];
+  }
+
+  return null;
+}
+
+function revealHiddenObject(flag, message) {
+  currentRoomState().flags[flag] = true;
+  saveState();
+  renderVisibleObjects();
+  renderActions(selectedObjectId);
+  setStatus(message);
+}
+
+function createInputAction(action) {
+  const form = document.createElement("form");
+  form.className = "input-action";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = action.input.placeholder;
+  input.autocomplete = "off";
+  if (action.input.inputMode) {
+    input.inputMode = action.input.inputMode;
+  }
+  input.setAttribute("aria-label", action.input.placeholder);
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.className = "action-button";
+  submit.textContent = action.label;
+
+  form.append(input, submit);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const entry = input.value.trim();
+    if (normaliseEntry(entry) !== normaliseEntry(action.input.answer)) {
+      setStatus(`That entry does not work.`, true);
+      return;
+    }
+    runCustomAction(action.type, entry);
+  });
+
+  return form;
+}
+
+function normaliseEntry(value) {
+  return value.replace(/\s+/g, " ").toUpperCase();
 }
 
 function canPickup(objectId, item) {
   const roomState = currentRoomState();
   if (roomState.collected.includes(item)) {
+    return false;
+  }
+
+  if (!roomState.flags[`inspected_${objectId}`]) {
     return false;
   }
 
@@ -392,6 +530,10 @@ function createActionButton(label, onClick, isPrimary = false) {
 }
 
 function inspectObject(objectId) {
+  currentRoomState().flags[`inspected_${objectId}`] = true;
+  saveState();
+  renderVisibleObjects();
+  renderActions(objectId);
   setStatus(currentRoom().objects[objectId].inspect || "You do not notice anything else yet.");
 }
 
@@ -403,7 +545,9 @@ function collectItem(item) {
     currentRoomState().collected.push(item);
   }
   saveState();
+  renderVisibleObjects();
   renderInventory();
+  renderInventoryInspector();
   renderActions(selectedObjectId);
   setStatus(`Added ${item} to your inventory.`);
 }
@@ -421,10 +565,11 @@ function useItemOnObject(item, objectId) {
   }
 
   if (roomNumber === 2 && item === "invisible-ink light" && objectId === "towel") {
-    if (!state.inventory.includes("crumpled paper")) {
-      setStatus("Find the crumpled paper folded inside the towel before shining the light through it.", true);
-      return;
-    }
+    setStatus("Take the crumpled paper first, then use the invisible-ink light from the inventory panel on the paper itself.", true);
+    return;
+  }
+
+  if (roomNumber === 2 && item === "invisible-ink light" && objectId === "crumpled paper") {
     roomState.flags.paperRevealed = true;
     saveState();
     setStatus("The crumpled paper reveals: 'I do not have much time. They’re coming. I was once where you were as well. I’ve tried to leave you hints through this note. But I cannot make it too obvious. Or else he will find out.' The sentence word counts are 6-2-8-9-7-6.");
@@ -434,6 +579,7 @@ function useItemOnObject(item, objectId) {
   if (roomNumber === 3 && item === "key 7" && objectId === "kitchenBox") {
     roomState.flags.boxOpen = true;
     saveState();
+    renderVisibleObjects();
     setStatus("Key 7 opens the box and reveals a red button.");
     return;
   }
@@ -462,6 +608,7 @@ function useItemOnObject(item, objectId) {
     }
     roomState.flags.tvLit = true;
     saveState();
+    renderVisibleObjects();
     renderActions(selectedObjectId);
     setStatus("You plug the cable into FOLIO. The TV and lights turn on, revealing key 4 on the ground.");
     return;
@@ -479,7 +626,8 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
-  setStatus(`${capitalize(item)} does not seem to work on the ${currentRoom().objects[objectId].name.toLowerCase()}.`, true);
+  const targetName = currentRoom().objects[objectId]?.name || objectId;
+  setStatus(`${capitalize(item)} does not seem to work on the ${targetName.toLowerCase()}.`, true);
 }
 
 function addInventoryItem(item) {
@@ -490,11 +638,13 @@ function addInventoryItem(item) {
     currentRoomState().collected.push(item);
   }
   saveState();
+  renderVisibleObjects();
   renderInventory();
+  renderInventoryInspector();
   renderActions(selectedObjectId);
 }
 
-function runCustomAction(actionType) {
+function runCustomAction(actionType, entry = "") {
   const roomState = currentRoomState();
 
   if (actionType === "ring-doorbell") {
@@ -628,15 +778,64 @@ function renderInventory() {
     itemElement.type = "button";
     itemElement.className = "inventory-item";
     itemElement.textContent = item;
-    itemElement.addEventListener("click", () => {
-      if (!selectedObjectId) {
-        setStatus(`Select a room object before using ${item}.`, true);
-        return;
-      }
-      useItemOnObject(item, selectedObjectId);
-    });
+    itemElement.classList.toggle("selected", item === selectedInventoryItem);
+    itemElement.addEventListener("click", () => selectInventoryItem(item));
     list.append(itemElement);
   });
+}
+
+
+function selectInventoryItem(item) {
+  selectedInventoryItem = item;
+  renderInventory();
+  renderInventoryInspector();
+  setStatus(`Selected ${item}. Click a room object to try using it there, or use another inventory object on it below.`);
+}
+
+function renderInventoryInspector() {
+  const panel = document.getElementById("inventory-inspector");
+  if (!panel) {
+    return;
+  }
+
+  panel.classList.toggle("hidden", !selectedInventoryItem);
+  document.getElementById("inventory-object-name").textContent = selectedInventoryItem || "Nothing selected";
+  document.getElementById("inventory-object-description").textContent = selectedInventoryItem
+    ? inventoryDescription(selectedInventoryItem)
+    : "Click an inventory item to inspect it here, then click a room object to try using the item on that object.";
+
+  const actions = document.getElementById("inventory-object-actions");
+  actions.replaceChildren();
+  if (!selectedInventoryItem) {
+    return;
+  }
+
+  if (selectedObjectId) {
+    const objectName = currentRoom().objects[selectedObjectId].name;
+    actions.append(createActionButton(`Use on ${objectName}`, () => useItemOnObject(selectedInventoryItem, selectedObjectId), true));
+  }
+
+  state.inventory
+    .filter((item) => item !== selectedInventoryItem)
+    .forEach((item) => {
+      actions.append(createActionButton(`Use ${item} on this`, () => useItemOnObject(item, selectedInventoryItem)));
+    });
+}
+
+function inventoryDescription(item) {
+  const descriptions = {
+    "gold key 5": "A numbered gold key. It can be tried on matching locks from the inventory panel.",
+    "crumpled paper": "A crumpled paper from inside the towel. It may reveal more under the right light.",
+    "airplane figurine": "A small airplane figurine hinting at AIRBUS.",
+    "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",
+    butter: "A stick of butter connected to the recipe-book timing clue.",
+    "key 7": "A numbered key labelled 7.",
+    "key 1": "A numbered key labelled 1.",
+    cable: "A cable that can connect to a matching port.",
+    "key 4": "A numbered key labelled 4.",
+    "key 2": "A numbered key labelled 2.",
+  };
+  return descriptions[item] || "An item in your inventory.";
 }
 
 function setStatus(message, isError = false) {

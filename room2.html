@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Room 2 - Locked</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="escape-room.js"></script>
+  </head>
+  <body data-room="2">
+    <main class="locked-layout">
+      <section class="intro-card locked-card">
+        <p class="eyebrow">Room 2 of 6</p>
+        <h1>Room 2</h1>
+        <p class="locked-copy">This room is locked until you complete the previous room.</p>
+        <button class="primary-link placeholder-complete" type="button">Complete placeholder room</button>
+        <div class="placeholder-room" aria-label="Placeholder room 2">
+          <div class="placeholder-object large">Future puzzle object</div>
+          <div class="placeholder-object small">Future clue</div>
+          <div class="placeholder-object medium">Future lock</div>
+        </div>
+        <nav class="room-nav room-nav-large" aria-label="Room progression">
+          <a class="room-link" href="room1.html">1</a>
+          <a class="room-link locked" href="room2.html" aria-disabled="true">2</a>
+          <a class="room-link locked" href="room3.html" aria-disabled="true">3</a>
+          <a class="room-link locked" href="room4.html" aria-disabled="true">4</a>
+          <a class="room-link locked" href="room5.html" aria-disabled="true">5</a>
+          <a class="room-link locked" href="room6.html" aria-disabled="true">6</a>
+        </nav>
+        <a class="primary-link" href="room1.html">Back to Room 1</a>
+      </section>
+    </main>
+  </body>
+</html>

@@ -33,6 +33,11 @@ const roomData = {
         name: "Numerical Keypad",
         description: "A six-digit keypad. At first, the keys refuse to accept input.",
         inspect: "Before five doorbell rings, it stays dark. Afterward, it waits for a six-digit code.",
+        lockedWhen: {
+          flag: "doorbellRings",
+          untilAtLeast: 5,
+          message: "The keypad is still locked and will not accept anything. Ring the doorbell five times first.",
+        },
         customActions: [{ label: "Enter code", type: "room1-keypad", input: { placeholder: "6-digit code", answer: "517125", inputMode: "numeric" } }],
       },
     },
@@ -235,6 +240,7 @@ const defaultState = {
 let state = loadState();
 let selectedObjectId = null;
 let selectedInventoryItem = null;
+let selectedPanelKind = null;
 
 function loadState() {
   const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -284,7 +290,7 @@ function initialisePage() {
 
   if (document.querySelector(".room-canvas")) {
     wireRoomObjects();
-    ensureInventoryInspector();
+    wireCanvasReset();
     renderVisibleObjects();
     renderInventory();
     wireResetButton();
@@ -322,32 +328,6 @@ function showLockedRoom() {
 }
 
 
-function ensureInventoryInspector() {
-  const sidePanel = document.querySelector(".side-panel");
-  if (!sidePanel || document.getElementById("inventory-inspector")) {
-    return;
-  }
-
-  const panel = document.createElement("section");
-  panel.className = "popup-card inventory-inspector hidden";
-  panel.id = "inventory-inspector";
-  panel.innerHTML = `
-    <div class="panel-heading">
-      <p class="eyebrow">Inventory object</p>
-      <button class="ghost-button" id="close-inventory-inspector" type="button">Close</button>
-    </div>
-    <h2 id="inventory-object-name">Nothing selected</h2>
-    <p id="inventory-object-description">Click an inventory item to inspect it here, then click a room object to try using the item on that object.</p>
-    <div class="action-row" id="inventory-object-actions" aria-label="Inventory object actions"></div>
-  `;
-  sidePanel.insertBefore(panel, sidePanel.firstElementChild);
-  document.getElementById("close-inventory-inspector").addEventListener("click", () => {
-    selectedInventoryItem = null;
-    renderInventory();
-    renderInventoryInspector();
-  });
-}
-
 function renderVisibleObjects() {
   document.querySelectorAll(".room-object").forEach((button) => {
     const object = currentRoom().objects[button.dataset.object];
@@ -364,18 +344,16 @@ function isObjectVisible(objectId) {
 
 function wireRoomObjects() {
   document.querySelectorAll(".room-object").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (selectedInventoryItem) {
-        selectedObjectId = button.dataset.object;
-        document.querySelectorAll(".room-object").forEach((roomButton) => {
-          roomButton.classList.toggle("selected", roomButton.dataset.object === selectedObjectId);
-        });
-        renderInventoryInspector();
-        useItemOnObject(selectedInventoryItem, button.dataset.object);
-        return;
-      }
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
       selectObject(button.dataset.object);
     });
+  });
+}
+
+function wireCanvasReset() {
+  document.querySelector(".room-canvas")?.addEventListener("click", () => {
+    resetObjectPanel();
   });
 }
 
@@ -383,15 +361,9 @@ function wireResetButton() {
   document.getElementById("reset-progress")?.addEventListener("click", () => {
     state = structuredClone(defaultState);
     saveState();
-    selectedObjectId = null;
-    selectedInventoryItem = null;
-    document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
-    document.getElementById("object-name").textContent = "Nothing selected";
-    document.getElementById("object-description").textContent = "Click a rectangle in the room to open its popup description here.";
-    document.getElementById("object-actions").replaceChildren();
+    resetObjectPanel();
     renderVisibleObjects();
     renderInventory();
-    renderInventoryInspector();
     updateRoomLocks();
     setStatus("Progress reset. Start again outside the house.");
   });
@@ -403,8 +375,11 @@ function selectObject(objectId) {
     return;
   }
   selectedObjectId = objectId;
+  selectedInventoryItem = null;
+  selectedPanelKind = "room";
   const object = currentRoom().objects[objectId];
 
+  showObjectPanel();
   document.querySelectorAll(".room-object").forEach((button) => {
     button.classList.toggle("selected", button.dataset.object === objectId);
   });
@@ -412,8 +387,8 @@ function selectObject(objectId) {
   document.getElementById("object-name").textContent = object.name;
   document.getElementById("object-description").textContent = object.description;
   renderActions(objectId);
-  renderInventoryInspector();
-  setStatus("Choose an action below.");
+  renderInventory();
+  setStatus(isObjectLocked(objectId) ? lockedMessage(objectId) : "Choose an action below.", isObjectLocked(objectId));
 }
 
 function renderActions(objectId) {
@@ -421,7 +396,18 @@ function renderActions(objectId) {
   actions.replaceChildren();
 
   const object = currentRoom().objects[objectId];
+  if (!object) {
+    return;
+  }
   actions.append(createActionButton("Inspect", () => inspectObject(objectId), true));
+
+  if (isObjectLocked(objectId)) {
+    const lockedNotice = document.createElement("p");
+    lockedNotice.className = "hint action-note";
+    lockedNotice.textContent = lockedMessage(objectId);
+    actions.append(lockedNotice);
+    return;
+  }
 
   if (object.pickup && canPickup(objectId, object.pickup.item)) {
     actions.append(createActionButton(object.pickup.label || `Take ${object.pickup.item}`, () => collectItem(object.pickup.item)));
@@ -439,6 +425,31 @@ function renderActions(objectId) {
 
     actions.append(createActionButton(action.label, () => runCustomAction(action.type)));
   });
+
+  if (state.inventory.length > 0) {
+    const inventoryHint = document.createElement("p");
+    inventoryHint.className = "hint action-note";
+    inventoryHint.textContent = "Click an inventory item below to try using it on this object.";
+    actions.append(inventoryHint);
+  }
+}
+
+function isObjectLocked(objectId) {
+  const rule = currentRoom().objects[objectId]?.lockedWhen;
+  if (!rule) {
+    return false;
+  }
+
+  const value = currentRoomState().flags[rule.flag];
+  if (Number.isFinite(rule.untilAtLeast)) {
+    return (value || 0) < rule.untilAtLeast;
+  }
+
+  return !value;
+}
+
+function lockedMessage(objectId) {
+  return currentRoom().objects[objectId]?.lockedWhen?.message || "This object is locked and cannot do anything yet.";
 }
 
 
@@ -530,6 +541,11 @@ function createActionButton(label, onClick, isPrimary = false) {
 }
 
 function inspectObject(objectId) {
+  if (selectedPanelKind === "inventory" && selectedInventoryItem === objectId) {
+    setStatus(inventoryInspect(objectId));
+    return;
+  }
+
   currentRoomState().flags[`inspected_${objectId}`] = true;
   saveState();
   renderVisibleObjects();
@@ -547,12 +563,16 @@ function collectItem(item) {
   saveState();
   renderVisibleObjects();
   renderInventory();
-  renderInventoryInspector();
   renderActions(selectedObjectId);
   setStatus(`Added ${item} to your inventory.`);
 }
 
 function useItemOnObject(item, objectId) {
+  if (currentRoom().objects[objectId] && isObjectLocked(objectId)) {
+    setStatus(lockedMessage(objectId), true);
+    return;
+  }
+
   const roomNumber = currentRoomNumber();
   const roomState = currentRoomState();
 
@@ -640,7 +660,6 @@ function addInventoryItem(item) {
   saveState();
   renderVisibleObjects();
   renderInventory();
-  renderInventoryInspector();
   renderActions(selectedObjectId);
 }
 
@@ -786,45 +805,74 @@ function renderInventory() {
 
 
 function selectInventoryItem(item) {
+  if (selectedPanelKind === "room" && selectedObjectId) {
+    useItemOnObject(item, selectedObjectId);
+    return;
+  }
+
+  if (selectedPanelKind === "inventory" && selectedInventoryItem && selectedInventoryItem !== item) {
+    useItemOnObject(item, selectedInventoryItem);
+    return;
+  }
+
   selectedInventoryItem = item;
-  renderInventory();
-  renderInventoryInspector();
-  setStatus(`Selected ${item}. Click a room object to try using it there, or use another inventory object on it below.`);
-}
+  selectedObjectId = null;
+  selectedPanelKind = "inventory";
+  showObjectPanel();
+  document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
+  document.getElementById("object-name").textContent = capitalize(item);
+  document.getElementById("object-description").textContent = inventoryDescription(item);
 
-function renderInventoryInspector() {
-  const panel = document.getElementById("inventory-inspector");
-  if (!panel) {
-    return;
-  }
-
-  panel.classList.toggle("hidden", !selectedInventoryItem);
-  document.getElementById("inventory-object-name").textContent = selectedInventoryItem || "Nothing selected";
-  document.getElementById("inventory-object-description").textContent = selectedInventoryItem
-    ? inventoryDescription(selectedInventoryItem)
-    : "Click an inventory item to inspect it here, then click a room object to try using the item on that object.";
-
-  const actions = document.getElementById("inventory-object-actions");
+  const actions = document.getElementById("object-actions");
   actions.replaceChildren();
-  if (!selectedInventoryItem) {
-    return;
+  actions.append(createActionButton("Inspect", () => inspectObject(item), true));
+
+  if (state.inventory.some((inventoryItem) => inventoryItem !== item)) {
+    const inventoryHint = document.createElement("p");
+    inventoryHint.className = "hint action-note";
+    inventoryHint.textContent = "Click another inventory item below to try using it on this item.";
+    actions.append(inventoryHint);
   }
 
-  if (selectedObjectId) {
-    const objectName = currentRoom().objects[selectedObjectId].name;
-    actions.append(createActionButton(`Use on ${objectName}`, () => useItemOnObject(selectedInventoryItem, selectedObjectId), true));
-  }
-
-  state.inventory
-    .filter((item) => item !== selectedInventoryItem)
-    .forEach((item) => {
-      actions.append(createActionButton(`Use ${item} on this`, () => useItemOnObject(item, selectedInventoryItem)));
-    });
+  renderInventory();
+  setStatus(`Opened ${item}.`);
 }
+
+function showObjectPanel() {
+  document.getElementById("object-panel")?.classList.remove("hidden");
+}
+
+function resetObjectPanel() {
+  selectedObjectId = null;
+  selectedInventoryItem = null;
+  selectedPanelKind = null;
+  document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
+  document.getElementById("object-panel")?.classList.add("hidden");
+  const actions = document.getElementById("object-actions");
+  actions?.replaceChildren();
+  renderInventory();
+}
+
+function inventoryInspect(item) {
+  const inspections = {
+    "gold key 5": "The stamped number 5 is clean and deliberate.",
+    "crumpled paper": "The paper is wrinkled and faintly discolored, as if hidden ink is waiting for the right light.",
+    "airplane figurine": "The miniature plane looks like a passenger jet: an Airbus clue for the drawer word.",
+    "invisible-ink light": "Its beam is tuned to expose invisible ink on notes and surfaces.",
+    butter: "The butter wrapper is marked like an ingredient from the pancake recipe.",
+    "key 7": "The key is labelled 7 and should fit a matching lock.",
+    "key 1": "The key is labelled 1 and should fit a matching lock.",
+    cable: "Both ends are intact and ready for a labelled port.",
+    "key 4": "The key is labelled 4 and should fit a matching lock.",
+    "key 2": "The key is labelled 2 and should fit a matching lock.",
+  };
+  return inspections[item] || "You do not notice anything else yet.";
+}
+
 
 function inventoryDescription(item) {
   const descriptions = {
-    "gold key 5": "A numbered gold key. It can be tried on matching locks from the inventory panel.",
+    "gold key 5": "A numbered gold key. With a lock description open, click this key in inventory to try it there.",
     "crumpled paper": "A crumpled paper from inside the towel. It may reveal more under the right light.",
     "airplane figurine": "A small airplane figurine hinting at AIRBUS.",
     "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",

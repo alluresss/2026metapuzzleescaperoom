@@ -3,32 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Room 2 - Locked</title>
+    <title>Room 2 - Bathroom</title>
     <link rel="stylesheet" href="styles.css" />
     <script defer src="escape-room.js"></script>
   </head>
   <body data-room="2">
-    <main class="locked-layout">
-      <section class="intro-card locked-card">
-        <p class="eyebrow">Room 2 of 6</p>
-        <h1>Room 2</h1>
-        <p class="locked-copy">This room is locked until you complete the previous room.</p>
-        <button class="primary-link placeholder-complete" type="button">Complete placeholder room</button>
-        <div class="placeholder-room" aria-label="Placeholder room 2">
-          <div class="placeholder-object large">Future puzzle object</div>
-          <div class="placeholder-object small">Future clue</div>
-          <div class="placeholder-object medium">Future lock</div>
+    <main class="game-layout">
+      <section class="room-stage" aria-labelledby="room-title">
+        <div class="room-header">
+          <div>
+            <p class="eyebrow">Room 2 of 6</p>
+            <h1 id="room-title">Bathroom</h1>
+          </div>
+          <nav class="room-nav" aria-label="Room progression">
+            <a class="room-link locked" href="room1.html" aria-disabled="true">1</a>
+            <a class="room-link active" href="room2.html">2</a>
+            <a class="room-link locked" href="room3.html" aria-disabled="true">3</a>
+            <a class="room-link locked" href="room4.html" aria-disabled="true">4</a>
+            <a class="room-link locked" href="room5.html" aria-disabled="true">5</a>
+            <a class="room-link locked" href="room6.html" aria-disabled="true">6</a>
+          </nav>
         </div>
-        <nav class="room-nav room-nav-large" aria-label="Room progression">
-          <a class="room-link" href="room1.html">1</a>
-          <a class="room-link locked" href="room2.html" aria-disabled="true">2</a>
-          <a class="room-link locked" href="room3.html" aria-disabled="true">3</a>
-          <a class="room-link locked" href="room4.html" aria-disabled="true">4</a>
-          <a class="room-link locked" href="room5.html" aria-disabled="true">5</a>
-          <a class="room-link locked" href="room6.html" aria-disabled="true">6</a>
-        </nav>
-        <a class="primary-link" href="room1.html">Back to Room 1</a>
+
+        <div class="room-canvas room-2-canvas" aria-label="Clickable bathroom objects">
+          <button class="room-object towel" data-object="towel">Towel</button>
+          <button class="room-object toothbrush" data-object="toothbrush">Toothbrush</button>
+          <button class="room-object toilet-shower" data-object="toilet">Toilet & shower</button>
+          <button class="room-object garbage-can" data-object="garbageCan">Garbage can</button>
+          <button class="room-object bathroom-box" data-object="bathroomBox">Locked box</button>
+          <button class="room-object bathroom-drawer" data-object="bathroomDrawer">Drawer</button>
+          <button class="room-object bathroom-door" data-object="bathroomDoor">Number door</button>
+        </div>
       </section>
+
+      <aside class="side-panel" aria-label="Object popup and inventory">
+        <section class="popup-card" id="object-panel">
+          <p class="eyebrow">Selected object</p>
+          <h2 id="object-name">Nothing selected</h2>
+          <p id="object-description">Click a rectangle in the room to open its popup description here.</p>
+          <div class="action-row" id="object-actions" aria-label="Available actions"></div>
+          <div class="status-message" id="status-message" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="inventory-card">
+          <div class="panel-heading">
+            <p class="eyebrow">Inventory</p>
+            <button class="ghost-button" id="reset-progress" type="button">Reset</button>
+          </div>
+          <div class="inventory-list" id="inventory-list"></div>
+          <p class="hint">Tip: select an object, then choose an inventory item action to try it.</p>
+        </section>
+      </aside>
     </main>
   </body>
 </html>

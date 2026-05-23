@@ -10,18 +10,18 @@ const roomData = {
       porchChair: {
         name: "Porch Chair",
         description: "An old porch chair covered in decorations and carvings of birds.",
-        inspect: "The bird decorations keep repeating one bird: EAGLE. If A=1, EAGLE becomes 5-1-7-12-5, or 517125 as a six-digit code.",
+        inspect: "An old porch chair covered in decorations and carvings of birds.",
       },
       doorbell: {
         name: "Doorbell",
         description: "A small, exquisitely made doorbell outside the locked door.",
-        inspect: "The chime echoes through the house. Something inside the keypad clicks after the fifth ring.",
+        inspect: "A small, exquisitely made doorbell outside the locked door.",
         customActions: [{ label: "Ring doorbell", type: "ring-doorbell" }],
       },
       doormat: {
         name: "Doormat",
         description: "A coarse welcome mat; upon closer inspection, you see a key under it.",
-        inspect: "The mat has a suspicious lump under one corner.",
+        inspect: "A coarse welcome mat; upon closer inspection, you see a key under it.",
         pickup: { item: "gold key", label: "Lift mat and take Gold Key" },
       },
       frontDoor: {

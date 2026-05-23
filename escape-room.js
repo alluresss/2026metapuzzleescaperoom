@@ -544,7 +544,6 @@ function inspectObject(objectId) {
   if (selectedPanelKind === "inventory" && selectedInventoryItem === objectId) {
     const inspectedText = inventoryInspect(objectId);
     document.getElementById("object-description").textContent = inspectedText;
-    setStatus(inspectedText);
     return;
   }
 
@@ -557,13 +556,13 @@ function inspectObject(objectId) {
     const rings = currentRoomState().flags.doorbellRings || 0;
     const keypadText = rings >= 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
     document.getElementById("object-description").textContent = keypadText;
-    setStatus(keypadText);
+    setStatus("Inspected object.");
     return;
   }
 
   const inspectText = currentRoom().objects[objectId].inspect || "You do not notice anything else yet.";
   document.getElementById("object-description").textContent = inspectText;
-  setStatus(inspectText);
+  setStatus("Inspected object.");
 }
 
 function collectItem(item) {

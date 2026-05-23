@@ -1,15 +1,15 @@
 :root {
   color-scheme: dark;
-  --bg: #10141f;
-  --panel: #1b2233;
-  --panel-strong: #252f46;
-  --accent: #f7b955;
-  --accent-strong: #ffcf73;
-  --text: #f5f7fb;
-  --muted: #aab3c7;
+  --bg: #000000;
+  --panel: #030a03;
+  --panel-strong: #061106;
+  --accent: #39ff14;
+  --accent-strong: #7fff7f;
+  --text: #98ffa5;
+  --muted: #6fca7a;
   --success: #6ee7a8;
   --danger: #ff7a90;
-  --line: rgba(255, 255, 255, 0.14);
+  --line: rgba(57, 255, 20, 0.6);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -21,9 +21,7 @@
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(247, 185, 85, 0.16), transparent 30rem),
-    linear-gradient(135deg, #10141f 0%, #151a28 45%, #0d1018 100%);
+  background: #000;
   color: var(--text);
 }
 
@@ -44,8 +42,8 @@ a {
 .popup-card,
 .inventory-card {
   border: 1px solid var(--line);
-  border-radius: 1.25rem;
-  background: rgba(27, 34, 51, 0.9);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.92);
   box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.3);
 }
 
@@ -85,7 +83,7 @@ h2 {
 .inventory-item,
 .room-link {
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
   text-decoration: none;
   transition:
@@ -94,12 +92,19 @@ h2 {
     background 150ms ease;
 }
 
+.intro-card,
+.popup-card,
+.inventory-card,
+.room-canvas {
+  box-shadow: 0 0 0.6rem rgba(57, 255, 20, 0.28);
+}
+
 .primary-link {
   display: inline-flex;
   margin-top: 1rem;
   padding: 0.85rem 1.15rem;
-  background: var(--accent);
-  color: #17110a;
+  background: rgba(57, 255, 20, 0.95);
+  color: #001500;
   font-weight: 800;
 }
 
@@ -148,7 +153,7 @@ h2 {
   height: 2.25rem;
   place-items: center;
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.75);
   color: var(--text);
   font-weight: 800;
 }
@@ -156,7 +161,7 @@ h2 {
 .room-link.active,
 .room-link.unlocked {
   border-color: var(--accent);
-  background: rgba(247, 185, 85, 0.22);
+  background: rgba(57, 255, 20, 0.2);
 }
 
 .room-link.locked {
@@ -169,11 +174,9 @@ h2 {
   height: min(72vh, 46rem);
   min-height: 35rem;
   overflow: hidden;
-  border: 0.35rem solid #3c2a1d;
-  border-radius: 1.5rem;
-  background:
-    linear-gradient(180deg, #31415e 0 58%, #5b3f2c 58% 100%),
-    repeating-linear-gradient(90deg, transparent 0 4rem, rgba(255, 255, 255, 0.04) 4rem 4.1rem);
+  border: 0.2rem solid var(--accent);
+  border-radius: 0;
+  background: #020802;
   box-shadow: inset 0 -7rem 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -181,10 +184,10 @@ h2 {
   position: absolute;
   display: grid;
   place-items: center;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 0.55rem;
+  border: 2px solid var(--line);
+  border-radius: 0;
   background: #7186a8;
-  color: #111723;
+  color: var(--text);
   cursor: pointer;
   font-size: clamp(0.58rem, 1.25vw, 0.95rem);
   font-weight: 900;
@@ -199,7 +202,7 @@ h2 {
 
 .room-object:hover,
 .room-object.selected {
-  outline: 4px solid var(--accent-strong);
+  outline: 2px solid var(--accent-strong);
   outline-offset: 3px;
 }
 
@@ -302,18 +305,18 @@ h2 {
 .ghost-button {
   padding: 0.6rem 0.8rem;
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.8);
   color: var(--text);
 }
 
 .action-button.primary-action {
-  background: rgba(247, 185, 85, 0.18);
+  background: rgba(57, 255, 20, 0.18);
   border-color: var(--accent);
 }
 
 .inventory-item {
-  background: rgba(110, 231, 168, 0.14);
-  border-color: rgba(110, 231, 168, 0.35);
+  background: rgba(57, 255, 20, 0.12);
+  border-color: var(--line);
 }
 
 .empty-inventory,
@@ -338,7 +341,7 @@ h2 {
   height: 16rem;
   margin: 1.25rem 0;
   border: 0.25rem solid #3c2a1d;
-  border-radius: 1rem;
+  border-radius: 0;
   background: linear-gradient(180deg, #2d3b54 0 58%, #5b3f2c 58% 100%);
 }
 
@@ -347,7 +350,7 @@ h2 {
   display: grid;
   place-items: center;
   border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
+  border-radius: 0;
   color: var(--muted);
 }
 
@@ -383,29 +386,27 @@ h2 {
 }
 
 .room-1-canvas {
-  background:
-    linear-gradient(180deg, #253a56 0 45%, #2f5d43 45% 58%, #6d4a32 58% 100%),
-    repeating-linear-gradient(90deg, transparent 0 4rem, rgba(255, 255, 255, 0.04) 4rem 4.1rem);
+  background: #020802;
 }
 
 .room-2-canvas {
-  background: linear-gradient(180deg, #8fb5c7 0 58%, #d8d3c8 58% 100%);
+  background: #020802;
 }
 
 .room-3-canvas {
-  background: linear-gradient(180deg, #6f7f58 0 58%, #6b4a33 58% 100%);
+  background: #020802;
 }
 
 .room-4-canvas {
-  background: linear-gradient(180deg, #31415e 0 58%, #5b3f2c 58% 100%);
+  background: #020802;
 }
 
 .room-5-canvas {
-  background: linear-gradient(180deg, #4d3f67 0 58%, #4a3347 58% 100%);
+  background: #020802;
 }
 
 .room-6-canvas {
-  background: linear-gradient(180deg, #202633 0 58%, #2b2925 58% 100%);
+  background: #020802;
 }
 
 .porch-chair {
@@ -557,7 +558,7 @@ h2 {
   bottom: 45%;
   width: 11%;
   height: 11%;
-  border-radius: 50%;
+  border-radius: 0;
   background: #cc2936;
   color: #fff5f5;
 }
@@ -695,9 +696,9 @@ h2 {
   min-width: 0;
   flex: 1;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 0.6rem 0.8rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.8);
   color: var(--text);
 }
 
@@ -708,5 +709,5 @@ h2 {
 
 .inventory-item.selected {
   border-color: var(--accent);
-  background: rgba(247, 185, 85, 0.22);
+  background: rgba(57, 255, 20, 0.2);
 }

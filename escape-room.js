@@ -542,7 +542,9 @@ function createActionButton(label, onClick, isPrimary = false) {
 
 function inspectObject(objectId) {
   if (selectedPanelKind === "inventory" && selectedInventoryItem === objectId) {
-    setStatus(inventoryInspect(objectId));
+    const inspectedText = inventoryInspect(objectId);
+    document.getElementById("object-description").textContent = inspectedText;
+    setStatus(inspectedText);
     return;
   }
 
@@ -553,11 +555,15 @@ function inspectObject(objectId) {
 
   if (currentRoomNumber() === 1 && objectId === "outsideKeypad") {
     const rings = currentRoomState().flags.doorbellRings || 0;
-    setStatus(rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.");
+    const keypadText = rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
+    document.getElementById("object-description").textContent = keypadText;
+    setStatus(keypadText);
     return;
   }
 
-  setStatus(currentRoom().objects[objectId].inspect || "You do not notice anything else yet.");
+  const inspectText = currentRoom().objects[objectId].inspect || "You do not notice anything else yet.";
+  document.getElementById("object-description").textContent = inspectText;
+  setStatus(inspectText);
 }
 
 function collectItem(item) {

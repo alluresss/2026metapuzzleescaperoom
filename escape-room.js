@@ -36,7 +36,7 @@ const roomData = {
         lockedWhen: {
           flag: "doorbellRings",
           untilAtLeast: 5,
-          message: "The keypad is locked. Ring the doorbell exactly five times.",
+          message: "The keypad is locked.",
         },
         customActions: [{ label: "Enter code", type: "room1-keypad", input: { placeholder: "6-digit code", answer: "517125", inputMode: "numeric" } }],
       },
@@ -679,7 +679,7 @@ function runCustomAction(actionType, entry = "") {
   const roomState = currentRoomState();
 
   if (actionType === "ring-doorbell") {
-    roomState.flags.doorbellRings = (roomState.flags.doorbellRings || 0) + 1;
+    roomState.flags.doorbellRings = Math.min(5, (roomState.flags.doorbellRings || 0) + 1);
     saveState();
     const rings = roomState.flags.doorbellRings;
     if (rings === 5) {
@@ -692,7 +692,7 @@ function runCustomAction(actionType, entry = "") {
 
   if (actionType === "room1-keypad") {
     if ((roomState.flags.doorbellRings || 0) < 5) {
-      setStatus("The keypad is locked. Ring the doorbell to power it up.", true);
+      setStatus("The keypad is locked.", true);
       return;
     }
     completeRoom();

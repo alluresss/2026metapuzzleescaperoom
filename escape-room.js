@@ -68,22 +68,16 @@ const roomData = {
         description: "A small trash can has been shoved under the sink.",
         inspect: "Inside is a small locked box, thrown away in a hurry.",
       },
-      bathroomBox: {
-        name: "Small Locked Box",
-        description: "A small lockbox found inside the garbage can. Its lock looks gold-key sized.",
-        inspect: "The box needs a small gold key.",
-        visibleWhen: { flag: "bathroomBoxFound" },
-      },
       bathroomDrawer: {
         name: "Locked Drawer",
-        description: "A drawer under the sink is sealed by a letter combination lock.",
-        inspect: "The six-letter lock is ready for a word. The airplane figurine suggests AIRBUS.",
+        description: "",
+        inspect: "A locked drawer. It requires a word.",
         customActions: [{ label: "Enter word", type: "room2-drawer", input: { placeholder: "6-letter word", answer: "AIRBUS" } }],
       },
       bathroomDoor: {
         name: "Number-Locked Door",
-        description: "The way onward is blocked by a six-digit number combination lock.",
-        inspect: "The lock needs the hidden number from the revealed note.",
+        description: "",
+        inspect: "Another large door, this one requiring another 6-digit code.",
         customActions: [{ label: "Enter code", type: "room2-door", input: { placeholder: "6-digit code", answer: "628976", inputMode: "numeric" } }],
       },
     },
@@ -468,8 +462,9 @@ function getFoundObjectAction(objectId) {
     return null;
   }
 
-  if (currentRoomNumber() === 2 && objectId === "garbageCan" && !roomState.flags.bathroomBoxFound) {
-    return [{ label: "Take out small locked box", onClick: () => revealHiddenObject("bathroomBoxFound", "You take the small locked box out of the garbage can.") }];
+
+  if (currentRoomNumber() === 2 && objectId === "garbageCan" && !state.inventory.includes("small locked box")) {
+    return [{ label: "Take out small locked box", onClick: () => collectItem("small locked box") }];
   }
 
   if (currentRoomNumber() === 3 && objectId === "potsPans" && !roomState.flags.kitchenBoxFound) {
@@ -597,11 +592,12 @@ function useItemOnObject(item, objectId) {
   const roomNumber = currentRoomNumber();
   const roomState = currentRoomState();
 
-  if (roomNumber === 2 && item === "gold key" && objectId === "bathroomBox") {
+
+  if (roomNumber === 2 && item === "gold key" && objectId === "small locked box") {
     roomState.flags.boxOpen = true;
     saveState();
     addInventoryItem("airplane figurine");
-    setStatus("The gold key opens the discarded box. Inside is a small airplane figurine. From earlier answers, it must be an Airbus.");
+    setStatus("The gold key opens the small locked box. Inside is a small airplane figurine.");
     return;
   }
 
@@ -613,7 +609,7 @@ function useItemOnObject(item, objectId) {
   if (roomNumber === 2 && item === "invisible-ink light" && objectId === "crumpled paper") {
     roomState.flags.paperRevealed = true;
     saveState();
-    setStatus("The crumpled paper reveals: 'I do not have much time. They’re coming. I was once where you were as well. I’ve tried to leave you hints through this note. But I cannot make it too obvious. Or else he will find out.' The sentence word counts are 6-2-8-9-7-6.");
+    setStatus("The crumpled paper reveals: 'I do not have much time. They’re coming. I was once where you were as well. I’ve tried to leave you hints through this note. But I cannot make it too obvious. Or else he will find out.'");
     return;
   }
 
@@ -882,7 +878,8 @@ function inventoryInspect(item) {
   const inspections = {
     "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
     "crumpled paper": "The paper is wrinkled and faintly discolored, as if hidden ink is waiting for the right light.",
-    "airplane figurine": "The miniature plane looks like a passenger jet: an Airbus clue for the drawer word.",
+    "small locked box": "A small locked box, opened with a key.",
+    "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "Its beam is tuned to expose invisible ink on notes and surfaces.",
     butter: "The butter wrapper is marked like an ingredient from the pancake recipe.",
     "key 7": "The key is labelled 7 and should fit a matching lock.",
@@ -898,8 +895,9 @@ function inventoryInspect(item) {
 function inventoryDescription(item) {
   const descriptions = {
     "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
-    "crumpled paper": "A crumpled paper from inside the towel. It may reveal more under the right light.",
-    "airplane figurine": "A small airplane figurine hinting at AIRBUS.",
+    "crumpled paper": "A small piece of crumpled paper. Nothing seems to be written on it.",
+    "small locked box": "A small locked box, opened with a key.",
+    "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",
     butter: "A stick of butter connected to the recipe-book timing clue.",
     "key 7": "A numbered key labelled 7.",

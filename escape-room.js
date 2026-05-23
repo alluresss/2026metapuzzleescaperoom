@@ -274,6 +274,10 @@ function currentRoomState() {
   return state.rooms[currentRoomKey()];
 }
 
+function roomStateByNumber(roomNumber) {
+  return state.rooms[`room${roomNumber}`];
+}
+
 function initialisePage() {
   updateRoomLocks();
   wireRoomNavigation();
@@ -589,61 +593,62 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
-  const roomNumber = currentRoomNumber();
-  const roomState = currentRoomState();
+  const room2State = roomStateByNumber(2);
+  const room3State = roomStateByNumber(3);
+  const room4State = roomStateByNumber(4);
+  const room5State = roomStateByNumber(5);
 
-
-  if (roomNumber === 2 && item === "gold key" && objectId === "small locked box") {
-    roomState.flags.boxOpen = true;
+  if (item === "gold key" && objectId === "small locked box") {
+    room2State.flags.boxOpen = true;
     saveState();
     addInventoryItem("airplane figurine");
     setStatus("The gold key opens the small locked box. Inside is a small airplane figurine.");
     return;
   }
 
-  if (roomNumber === 2 && item === "invisible-ink light" && objectId === "towel") {
+  if (item === "invisible-ink light" && objectId === "towel") {
     setStatus("Take the crumpled paper first, then use the invisible-ink light from the inventory panel on the paper itself.", true);
     return;
   }
 
-  if (roomNumber === 2 && item === "invisible-ink light" && objectId === "crumpled paper") {
-    roomState.flags.paperRevealed = true;
+  if (item === "invisible-ink light" && objectId === "crumpled paper") {
+    room2State.flags.paperRevealed = true;
     saveState();
     setStatus("The crumpled paper reveals: 'I do not have much time. They’re coming. I was once where you were as well. I’ve tried to leave you hints through this note. But I cannot make it too obvious. Or else he will find out.'");
     return;
   }
 
-  if (roomNumber === 3 && item === "key 7" && objectId === "kitchenBox") {
-    roomState.flags.boxOpen = true;
+  if (item === "key 7" && objectId === "kitchenBox") {
+    room3State.flags.boxOpen = true;
     saveState();
     renderVisibleObjects();
     setStatus("Key 7 opens the box and reveals a red button.");
     return;
   }
 
-  if (roomNumber === 4 && item === "invisible-ink light" && objectId === "livingCouch") {
+  if (item === "invisible-ink light" && objectId === "livingCouch") {
     setStatus("The couch note appears in invisible ink: 'Remember: Buy Groceries.'");
     return;
   }
 
-  if (roomNumber === 4 && item === "invisible-ink light" && objectId === "oldBooks") {
+  if (item === "invisible-ink light" && objectId === "oldBooks") {
     setStatus("The light reveals the book annotations. Solving them gives the drawer combination 2651.");
     return;
   }
 
-  if (roomNumber === 4 && item === "key 1" && objectId === "livingTv") {
-    roomState.flags.tvPanelOpen = true;
+  if (item === "key 1" && objectId === "livingTv") {
+    room4State.flags.tvPanelOpen = true;
     saveState();
     setStatus("Key 1 opens the TV service panel. One cable port is labelled FOLIO.");
     return;
   }
 
-  if (roomNumber === 4 && item === "cable" && objectId === "livingTv") {
-    if (!roomState.flags.tvPanelOpen) {
+  if (item === "cable" && objectId === "livingTv") {
+    if (!room4State.flags.tvPanelOpen) {
       setStatus("The cable cannot reach the FOLIO port until the TV panel is unlocked with key 1.", true);
       return;
     }
-    roomState.flags.tvLit = true;
+    room4State.flags.tvLit = true;
     saveState();
     renderVisibleObjects();
     renderActions(selectedObjectId);
@@ -651,13 +656,13 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
-  if (roomNumber === 4 && item === "key 4" && objectId === "livingDoor") {
+  if (item === "key 4" && objectId === "livingDoor") {
     completeRoom();
     return;
   }
 
-  if (roomNumber === 5 && item === "key 2" && objectId === "lamp") {
-    roomState.flags.lampOpen = true;
+  if (item === "key 2" && objectId === "lamp") {
+    room5State.flags.lampOpen = true;
     saveState();
     setStatus("Key 2 opens the lamp. A note reads: 'I’m sorry. I can’t help you anymore.' Invisible ink adds: username = admin. Password = [scribbled].");
     return;
@@ -842,7 +847,7 @@ function selectInventoryItem(item) {
   showObjectPanel();
   document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
   document.getElementById("object-name").textContent = item === "gold key" ? "Gold Key" : capitalize(item);
-  document.getElementById("object-description").textContent = inventoryDescription(item);
+  document.getElementById("object-description").textContent = "Inspect this object to learn more.";
 
   const actions = document.getElementById("object-actions");
   actions.replaceChildren();

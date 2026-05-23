@@ -555,7 +555,7 @@ function inspectObject(objectId) {
 
   if (currentRoomNumber() === 1 && objectId === "outsideKeypad") {
     const rings = currentRoomState().flags.doorbellRings || 0;
-    const keypadText = rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
+    const keypadText = rings >= 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
     document.getElementById("object-description").textContent = keypadText;
     setStatus(keypadText);
     return;
@@ -687,17 +687,13 @@ function runCustomAction(actionType, entry = "") {
       setStatus("After the fifth ring, the keypad lights up and starts accepting input.");
       return;
     }
-    if (rings > 5) {
-      setStatus("The keypad clicks back off. You need exactly five rings.", true);
-      return;
-    }
-    setStatus("The doorbell rings.");
+        setStatus("The doorbell rings.");
     return;
   }
 
   if (actionType === "room1-keypad") {
-    if ((roomState.flags.doorbellRings || 0) !== 5) {
-      setStatus("The keypad is locked. Ring the doorbell exactly five times.", true);
+    if ((roomState.flags.doorbellRings || 0) < 5) {
+      setStatus("The keypad is locked. Ring the doorbell to power it up.", true);
       return;
     }
     completeRoom();

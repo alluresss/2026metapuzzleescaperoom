@@ -72,7 +72,7 @@ const roomData = {
         name: "Locked Drawer",
         description: "",
         inspect: "A locked drawer. It requires a word.",
-        customActions: [{ label: "Enter word", type: "room2-drawer", input: { placeholder: "6-letter word", answer: "AIRBUS" } }],
+        customActions: [{ label: "Enter word", type: "room2-drawer", input: { placeholder: "", answer: "AIRBUS" } }],
       },
       bathroomDoor: {
         name: "Number-Locked Door",
@@ -89,38 +89,26 @@ const roomData = {
     objects: {
       refrigerator: {
         name: "Refrigerator",
-        description: "A refrigerator packed with ingredients, leftovers, and one suspicious stick of butter.",
-        inspect: "Among the food, the butter is the only ingredient from the pancake recipe that looks untouched.",
-        pickup: { item: "butter", label: "Take butter" },
+        description: "A large refrigerator. It has a lot of food in it. What would you like to pull out?",
+        inspect: "A large refrigerator. It has a lot of food in it. What would you like to pull out?",
+        customActions: [{ label: "Search", type: "room3-fridge", input: { placeholder: "item name" } }],
       },
       potsPans: {
         name: "Pots and Pans",
-        description: "A clattering stack of cookware fills a low cabinet.",
-        inspect: "Behind the pans is a locked box. It has a small label that says key 7.",
+        description: "A bunch of stacked pots and pans. Upon closer inspection, there is a small container that is locked with a keyhole.",
+        inspect: "A bunch of stacked pots and pans. Upon closer inspection, there is a small container that is locked with a keyhole.",
       },
       microwave: {
         name: "Microwave",
-        description: "An old microwave with a numeric timer.",
-        inspect: "It is waiting for a cooking time. The recipe book says to microwave for some amount of time.",
+        description: "A microwave. It requires an object and a cooking time.",
+        inspect: "A microwave. It requires an object and a cooking time.",
         customActions: [{ label: "Set microwave time", type: "room3-microwave", input: { placeholder: "seconds", answer: "124315", inputMode: "numeric" } }],
       },
       recipeBook: {
         name: "Recipe Book",
-        description: "A stained recipe book lies open on the counter.",
-        inspect: "Pancakes: 1 tbsp Baking Powder, 2 tbsp Sugar, 4 tsp Salt, 3 tbsp Butter, 1 Egg, 5 tbsp Flour. Taking the ingredient initials in amount order gives B-S-S-B-E-F, so butter is connected to 124315 seconds.",
-      },
-      kitchenBox: {
-        name: "Locked Box",
-        description: "A metal box hidden inside the pots and pans.",
-        inspect: "The box is labelled 7 and needs the matching key.",
-        visibleWhen: { flag: "kitchenBoxFound" },
-      },
-      redButton: {
-        name: "Red Button",
-        description: "A red button sits inside the opened lockbox.",
-        inspect: "Pressing it should release the kitchen exit.",
-        visibleWhen: { flag: "boxOpen" },
-        customActions: [{ label: "Press red button", type: "room3-button" }],
+        description: "An old recipe book laying on the counter. It is extremely thick and has a bunch of old recipes. Which recipe would you like to search for?",
+        inspect: "An old recipe book laying on the counter. It is extremely thick and has a bunch of old recipes. Which recipe would you like to search for?",
+        customActions: [{ label: "Search recipe", type: "room3-recipe", input: { placeholder: "recipe name" } }],
       },
     },
   },
@@ -471,8 +459,8 @@ function getFoundObjectAction(objectId) {
     return [{ label: "Take out small locked box", onClick: () => collectItem("small locked box") }];
   }
 
-  if (currentRoomNumber() === 3 && objectId === "potsPans" && !roomState.flags.kitchenBoxFound) {
-    return [{ label: "Pull out locked box", onClick: () => revealHiddenObject("kitchenBoxFound", "You pull the labelled locked box out from behind the pots and pans.") }];
+  if (currentRoomNumber() === 3 && objectId === "potsPans" && !state.inventory.includes("kitchen container")) {
+    return [{ label: "Take kitchen container", onClick: () => collectItem("kitchen container") }];
   }
 
   return null;
@@ -508,7 +496,7 @@ function createInputAction(action) {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const entry = input.value.trim();
-    if (normaliseEntry(entry) !== normaliseEntry(action.input.answer)) {
+    if (action.input.answer && normaliseEntry(entry) !== normaliseEntry(action.input.answer)) {
       setStatus(`That entry does not work.`, true);
       return;
     }
@@ -618,11 +606,16 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
-  if (item === "key 7" && objectId === "kitchenBox") {
+  if (item === "small silver key" && objectId === "kitchen container") {
     room3State.flags.boxOpen = true;
     saveState();
-    renderVisibleObjects();
-    setStatus("Key 7 opens the box and reveals a red button.");
+    addInventoryItem("red button");
+    setStatus("The kitchen container unlocks and reveals a red button.");
+    return;
+  }
+
+  if (item === "red button" && currentRoomNumber() === 3) {
+    completeRoom();
     return;
   }
 
@@ -734,17 +727,27 @@ function runCustomAction(actionType, entry = "") {
       setStatus("The microwave is empty. Take the butter from the refrigerator first.", true);
       return;
     }
-    addInventoryItem("key 7");
-    setStatus("After 124315 seconds, the butter melts away to reveal a key labelled 7.");
+    addInventoryItem("small silver key");
+    setStatus("After 124315 seconds, the butter melts away to reveal a small silver key.");
     return;
   }
 
-  if (actionType === "room3-button") {
-    if (!roomState.flags.boxOpen) {
-      setStatus("The red button is still locked inside the box.", true);
+  if (actionType === "room3-recipe") {
+    if (normaliseEntry(entry) === "PANCAKES") {
+      setStatus("Pancakes:\n1 tbsp Baking Powder\n2 tbsp Sugar\n4 tsp Salt\n3 tbsp Butter\n1 Egg\n5 tbsp Flour.");
       return;
     }
-    completeRoom();
+    setStatus("Hm... nothing useful", true);
+    return;
+  }
+
+  if (actionType === "room3-fridge") {
+    if (normaliseEntry(entry) === "BUTTER") {
+      addInventoryItem("butter");
+      setStatus("Butter pulled out!");
+      return;
+    }
+    setStatus("Hm... that doesn't seem helpful.", true);
     return;
   }
 
@@ -783,7 +786,7 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room6-keyholes") {
-    const requiredKeys = ["key 2", "key 1", "key 4", "key 7", "gold key"];
+    const requiredKeys = ["key 2", "key 1", "key 4", "small silver key", "gold key"];
     const missing = requiredKeys.filter((item) => !state.inventory.includes(item));
     if (missing.length > 0) {
       setStatus(`You are missing: ${missing.join(", ")}.`, true);
@@ -886,8 +889,10 @@ function inventoryInspect(item) {
     "small locked box": "A small locked box, opened with a key.",
     "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "Its beam is tuned to expose invisible ink on notes and surfaces.",
-    butter: "The butter wrapper is marked like an ingredient from the pancake recipe.",
-    "key 7": "The key is labelled 7 and should fit a matching lock.",
+    butter: "An inconspicuous stick of butter.",
+    "kitchen container": "A small kitchen container that is locked. It needs a key.",
+    "red button": "A red button.",
+    "small silver key": "A small silver key, exquisitely made. The number 7 is stamped.",
     "key 1": "The key is labelled 1 and should fit a matching lock.",
     cable: "Both ends are intact and ready for a labelled port.",
     "key 4": "The key is labelled 4 and should fit a matching lock.",
@@ -904,8 +909,10 @@ function inventoryDescription(item) {
     "small locked box": "A small locked box, opened with a key.",
     "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",
-    butter: "A stick of butter connected to the recipe-book timing clue.",
-    "key 7": "A numbered key labelled 7.",
+    butter: "An inconspicuous stick of butter.",
+    "kitchen container": "A small kitchen container that is locked. It needs a key.",
+    "red button": "",
+    "small silver key": "",
     "key 1": "A numbered key labelled 1.",
     cable: "A cable that can connect to a matching port.",
     "key 4": "A numbered key labelled 4.",
@@ -930,6 +937,15 @@ function capitalize(value) {
 function displayItemName(item) {
   if (item === "gold key") {
     return "Gold Key";
+  }
+  if (item === "small silver key") {
+    return "Small Silver Key";
+  }
+  if (item === "red button") {
+    return "Red Button";
+  }
+  if (item === "kitchen container") {
+    return "Kitchen Container";
   }
   return capitalize(item);
 }

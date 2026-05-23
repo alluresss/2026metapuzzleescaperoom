@@ -9,34 +9,34 @@ const roomData = {
     objects: {
       porchChair: {
         name: "Porch Chair",
-        description: "A weathered porch chair covered in carved and painted bird decorations.",
+        description: "An old porch chair covered in decorations and carvings of birds.",
         inspect: "The bird decorations keep repeating one bird: EAGLE. If A=1, EAGLE becomes 5-1-7-12-5, or 517125 as a six-digit code.",
       },
       doorbell: {
         name: "Doorbell",
-        description: "A brass doorbell beside the locked door. It looks recently polished.",
+        description: "A small, exquisitely made doorbell outside the locked door.",
         inspect: "The chime echoes through the house. Something inside the keypad clicks after the fifth ring.",
         customActions: [{ label: "Ring doorbell", type: "ring-doorbell" }],
       },
       doormat: {
         name: "Doormat",
-        description: "A coarse welcome mat lies in front of the door.",
+        description: "A coarse welcome mat; upon closer inspection, you see a key under it.",
         inspect: "The mat has a suspicious lump under one corner.",
-        pickup: { item: "gold key 5", label: "Lift mat and take gold key 5" },
+        pickup: { item: "gold key", label: "Lift mat and take Gold Key" },
       },
       frontDoor: {
         name: "Locked Door",
-        description: "The door to the house is shut tight. A numerical keypad is mounted next to it.",
+        description: "A large locked door, presumably the entrance to the house. It is locked tight, and has a small closed keypad.",
         inspect: "The door has no ordinary keyhole, only the keypad.",
       },
       outsideKeypad: {
-        name: "Numerical Keypad",
-        description: "A six-digit keypad. At first, the keys refuse to accept input.",
-        inspect: "Before five doorbell rings, it stays dark. Afterward, it waits for a six-digit code.",
+        name: "Keypad",
+        description: "A small locked numerical keypad.",
+        inspect: "A small locked numerical keypad.",
         lockedWhen: {
           flag: "doorbellRings",
           untilAtLeast: 5,
-          message: "The keypad is still locked and will not accept anything. Ring the doorbell five times first.",
+          message: "The keypad is locked. Ring the doorbell exactly five times.",
         },
         customActions: [{ label: "Enter code", type: "room1-keypad", input: { placeholder: "6-digit code", answer: "517125", inputMode: "numeric" } }],
       },
@@ -385,7 +385,7 @@ function selectObject(objectId) {
   });
 
   document.getElementById("object-name").textContent = object.name;
-  document.getElementById("object-description").textContent = object.description;
+  document.getElementById("object-description").textContent = "Inspect this object to learn more.";
   renderActions(objectId);
   renderInventory();
   setStatus(isObjectLocked(objectId) ? lockedMessage(objectId) : "Choose an action below.", isObjectLocked(objectId));
@@ -550,6 +550,13 @@ function inspectObject(objectId) {
   saveState();
   renderVisibleObjects();
   renderActions(objectId);
+
+  if (currentRoomNumber() === 1 && objectId === "outsideKeypad") {
+    const rings = currentRoomState().flags.doorbellRings || 0;
+    setStatus(rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.");
+    return;
+  }
+
   setStatus(currentRoom().objects[objectId].inspect || "You do not notice anything else yet.");
 }
 
@@ -576,7 +583,7 @@ function useItemOnObject(item, objectId) {
   const roomNumber = currentRoomNumber();
   const roomState = currentRoomState();
 
-  if (roomNumber === 2 && item === "gold key 5" && objectId === "bathroomBox") {
+  if (roomNumber === 2 && item === "gold key" && objectId === "bathroomBox") {
     roomState.flags.boxOpen = true;
     saveState();
     addInventoryItem("airplane figurine");
@@ -647,7 +654,7 @@ function useItemOnObject(item, objectId) {
   }
 
   const targetName = currentRoom().objects[objectId]?.name || objectId;
-  setStatus(`${capitalize(item)} does not seem to work on the ${targetName.toLowerCase()}.`, true);
+  setStatus(`${item === "gold key" ? "Gold Key" : capitalize(item)} does not seem to work on the ${targetName.toLowerCase()}.`, true);
 }
 
 function addInventoryItem(item) {
@@ -670,13 +677,21 @@ function runCustomAction(actionType, entry = "") {
     roomState.flags.doorbellRings = (roomState.flags.doorbellRings || 0) + 1;
     saveState();
     const rings = roomState.flags.doorbellRings;
-    setStatus(rings >= 5 ? "After the fifth ring, the numerical keypad wakes up and accepts input." : `The doorbell rings. Count: ${rings}/5.`);
+    if (rings === 5) {
+      setStatus("After the fifth ring, the keypad lights up and starts accepting input.");
+      return;
+    }
+    if (rings > 5) {
+      setStatus("The keypad clicks back off. You need exactly five rings.", true);
+      return;
+    }
+    setStatus("The doorbell rings.");
     return;
   }
 
   if (actionType === "room1-keypad") {
-    if ((roomState.flags.doorbellRings || 0) < 5) {
-      setStatus("The keypad is still locked and will not accept anything. Ring the doorbell five times first.", true);
+    if ((roomState.flags.doorbellRings || 0) !== 5) {
+      setStatus("The keypad is locked. Ring the doorbell exactly five times.", true);
       return;
     }
     completeRoom();
@@ -757,7 +772,7 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room6-keyholes") {
-    const requiredKeys = ["key 2", "key 1", "key 4", "key 7", "gold key 5"];
+    const requiredKeys = ["key 2", "key 1", "key 4", "key 7", "gold key"];
     const missing = requiredKeys.filter((item) => !state.inventory.includes(item));
     if (missing.length > 0) {
       setStatus(`You are missing: ${missing.join(", ")}.`, true);
@@ -796,7 +811,7 @@ function renderInventory() {
     const itemElement = document.createElement("button");
     itemElement.type = "button";
     itemElement.className = "inventory-item";
-    itemElement.textContent = item;
+    itemElement.textContent = displayItemName(item);
     itemElement.classList.toggle("selected", item === selectedInventoryItem);
     itemElement.addEventListener("click", () => selectInventoryItem(item));
     list.append(itemElement);
@@ -820,7 +835,7 @@ function selectInventoryItem(item) {
   selectedPanelKind = "inventory";
   showObjectPanel();
   document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
-  document.getElementById("object-name").textContent = capitalize(item);
+  document.getElementById("object-name").textContent = item === "gold key" ? "Gold Key" : capitalize(item);
   document.getElementById("object-description").textContent = inventoryDescription(item);
 
   const actions = document.getElementById("object-actions");
@@ -835,7 +850,7 @@ function selectInventoryItem(item) {
   }
 
   renderInventory();
-  setStatus(`Opened ${item}.`);
+  setStatus(`Opened ${displayItemName(item)}.`);
 }
 
 function showObjectPanel() {
@@ -855,7 +870,7 @@ function resetObjectPanel() {
 
 function inventoryInspect(item) {
   const inspections = {
-    "gold key 5": "The stamped number 5 is clean and deliberate.",
+    "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
     "crumpled paper": "The paper is wrinkled and faintly discolored, as if hidden ink is waiting for the right light.",
     "airplane figurine": "The miniature plane looks like a passenger jet: an Airbus clue for the drawer word.",
     "invisible-ink light": "Its beam is tuned to expose invisible ink on notes and surfaces.",
@@ -872,7 +887,7 @@ function inventoryInspect(item) {
 
 function inventoryDescription(item) {
   const descriptions = {
-    "gold key 5": "A numbered gold key. With a lock description open, click this key in inventory to try it there.",
+    "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
     "crumpled paper": "A crumpled paper from inside the towel. It may reveal more under the right light.",
     "airplane figurine": "A small airplane figurine hinting at AIRBUS.",
     "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",
@@ -897,6 +912,13 @@ function setStatus(message, isError = false) {
 
 function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function displayItemName(item) {
+  if (item === "gold key") {
+    return "Gold Key";
+  }
+  return capitalize(item);
 }
 
 initialisePage();

@@ -282,6 +282,7 @@ function currentRoomState() {
 
 function initialisePage() {
   updateRoomLocks();
+  wireRoomNavigation();
 
   if (currentRoomNumber() > state.unlockedRoom) {
     showLockedRoom();
@@ -302,13 +303,21 @@ function updateRoomLocks() {
   document.querySelectorAll(".room-link").forEach((link, index) => {
     const roomNumber = index + 1;
     const isUnlocked = roomNumber <= state.unlockedRoom;
+    const isDiscovered = roomNumber <= state.unlockedRoom;
+
+    link.hidden = !isDiscovered;
     link.classList.toggle("locked", !isUnlocked);
     link.classList.toggle("unlocked", isUnlocked);
     link.setAttribute("aria-disabled", String(!isUnlocked));
+    link.onclick = !isUnlocked ? (event) => event.preventDefault() : null;
+  });
+}
 
-    if (!isUnlocked) {
-      link.addEventListener("click", (event) => event.preventDefault());
-    }
+function wireRoomNavigation() {
+  document.querySelectorAll(".room-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      resetObjectPanel();
+    });
   });
 }
 
@@ -554,7 +563,7 @@ function inspectObject(objectId) {
 
   if (currentRoomNumber() === 1 && objectId === "outsideKeypad") {
     const rings = currentRoomState().flags.doorbellRings || 0;
-    const keypadText = rings >= 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
+    const keypadText = rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
     document.getElementById("object-description").textContent = keypadText;
     setStatus("Inspected object.");
     return;
@@ -679,14 +688,14 @@ function runCustomAction(actionType, entry = "") {
   const roomState = currentRoomState();
 
   if (actionType === "ring-doorbell") {
-    roomState.flags.doorbellRings = Math.min(5, (roomState.flags.doorbellRings || 0) + 1);
+    roomState.flags.doorbellRings = (roomState.flags.doorbellRings || 0) + 1;
     saveState();
     const rings = roomState.flags.doorbellRings;
     if (rings === 5) {
       setStatus("After the fifth ring, the keypad lights up and starts accepting input.");
       return;
     }
-        setStatus("The doorbell rings.");
+    setStatus("The doorbell rings.");
     return;
   }
 

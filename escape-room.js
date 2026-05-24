@@ -619,6 +619,13 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
+  if (item === "butter" && currentRoomNumber() === 3 && objectId === "microwave") {
+    room3State.flags.microwaveLoadedButter = true;
+    saveState();
+    setStatus("You put the butter in the microwave.");
+    return;
+  }
+
   if (item === "red button" && currentRoomNumber() === 3) {
     completeRoom();
     return;
@@ -677,17 +684,12 @@ function runCustomAction(actionType, entry = "") {
   if (actionType === "ring-doorbell") {
     roomState.flags.doorbellRings = (roomState.flags.doorbellRings || 0) + 1;
     saveState();
-    const rings = roomState.flags.doorbellRings;
-    if (rings === 5) {
-      setStatus("After the fifth ring, the keypad lights up and starts accepting input.");
-      return;
-    }
     setStatus("The doorbell rings.");
     return;
   }
 
   if (actionType === "room1-keypad") {
-    if ((roomState.flags.doorbellRings || 0) < 5) {
+    if ((roomState.flags.doorbellRings || 0) !== 5) {
       setStatus("The keypad is locked.", true);
       return;
     }
@@ -716,8 +718,8 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room3-microwave") {
-    if (!state.inventory.includes("butter")) {
-      setStatus("The microwave is empty. Take the butter from the refrigerator first.", true);
+    if (!roomState.flags.microwaveLoadedButter) {
+      setStatus("What do you want to microwave?", true);
       return;
     }
     addInventoryItem("small silver key");
@@ -864,6 +866,9 @@ function selectInventoryItem(item) {
   const actions = document.getElementById("object-actions");
   actions.replaceChildren();
   actions.append(createActionButton("Inspect", () => inspectObject(item), true));
+  if (item === "red button" && currentRoomNumber() === 3) {
+    actions.append(createActionButton("Press", () => useItemOnObject("red button", "inventory")));
+  }
 
   if (state.inventory.some((inventoryItem) => inventoryItem !== item)) {
     const inventoryHint = document.createElement("p");

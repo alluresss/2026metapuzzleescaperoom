@@ -161,13 +161,13 @@ const roomData = {
       nightstand: {
         name: "Nightstand Drawers",
         description: "Some drawers by the bed. It's locked with a 3-digit code.",
-        inspect: "The drawers are still code-locked. The clue is the two visible times: 6:07 and 3:45. Use 607 - 345 to get 262.",
+        inspect: "Some drawers by the bed. It's locked with a 3-digit code.",
         customActions: [{ label: "Enter combination", type: "room5-nightstand", input: { placeholder: "3-digit code", answer: "262", inputMode: "numeric" } }],
       },
       computer: {
         name: "Locked Computer",
         description: "A locked computer sitting on the table. It needs a username and a password.",
-        inspect: "The login prompt asks for username/password. The lamp note gives ADMIN, and the password is OVERRIDE.",
+        inspect: "A locked computer sitting on the table. It needs a username and a password.",
         customActions: [{ label: "Log in", type: "room5-computer", input: { placeholder: "username / password", answer: "admin / OVERRIDE" } }],
       },
       bed: {

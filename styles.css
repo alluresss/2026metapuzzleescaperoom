@@ -681,6 +681,50 @@ h2 {
   color: #ffcf73;
 }
 
+.room6-lock-ui {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.room6-slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.room6-slot {
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.3rem;
+  text-align: center;
+  font-size: 0.75rem;
+  min-height: 2.5rem;
+  display: grid;
+  place-items: center;
+}
+
+.victory-page {
+  background: radial-gradient(circle at 20% 20%, #163b1a 0, #041106 45%, #010501 100%);
+  color: #dcffe2;
+}
+
+.victory-layout {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.victory-card {
+  width: min(42rem, 100%);
+  border: 2px solid #9bff7f;
+  background: rgba(2, 12, 5, 0.85);
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 0 2rem rgba(120, 255, 120, 0.25);
+}
+
 .hidden {
   display: none !important;
 }

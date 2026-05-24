@@ -190,24 +190,19 @@ const roomData = {
   },
   room6: {
     title: "Basement",
-    startStatus: "Five keyholes stand between you and the final escape. The numbered keys spell a word.",
-    completeMessage: "You insert the keys in BADGE order: 2, 1, 4, 7, 5. The basement exit unlocks. You escaped!",
+    startStatus: "A giant locked door looms ahead. Maybe the huge lock mechanism can open it.",
+    completeMessage: "You hear a clicking noise: the door unlocks!",
     objects: {
       keyholes: {
-        name: "Five Keyholes",
-        description: "Five keyholes wait in a row. The collected numbered keys must be inserted in a word order.",
-        inspect: "The available keys are 1, 2, 4, 5, and 7. BADGE maps to B=2, A=1, D=4, G=7, E=5, so the key order is 2-1-4-7-5.",
-        customActions: [{ label: "Insert keys in BADGE order", type: "room6-keyholes" }],
+        name: "Huge Lock",
+        description: "A huge row of keyholes. Namely, 5 keyholes. Which order should you insert the keys in though?",
+        inspect: "A huge row of keyholes. Namely, 5 keyholes. Which order should you insert the keys in though?",
+        customActions: [{ label: "Check", type: "room6-keyholes" }],
       },
       basementDoor: {
-        name: "Final Door",
-        description: "A heavy basement door with no handle, only the five-key mechanism.",
-        inspect: "It will open only after the five keyholes are solved.",
-      },
-      wallMarkings: {
-        name: "Wall Markings",
-        description: "Scratched letters on the wall read: BADGE.",
-        inspect: "BADGE is not a password; it is the order for your numbered keys.",
+        name: "Giant Door",
+        description: "A ginormous door, bigger than any others you've seen. However, it is locked. Nothing you try opens it.",
+        inspect: "A ginormous door, bigger than any others you've seen. However, it is locked. Nothing you try opens it.",
       },
     },
   },
@@ -414,6 +409,10 @@ function renderActions(objectId) {
   });
 
   object.customActions?.forEach((action) => {
+    if (action.type === "room6-keyholes") {
+      actions.append(createRoom6LockAction(action));
+      return;
+    }
     if (action.input) {
       actions.append(createInputAction(action));
       return;
@@ -427,6 +426,13 @@ function renderActions(objectId) {
     inventoryHint.className = "hint action-note";
     inventoryHint.textContent = "Click an inventory item below to try using it on this object.";
     actions.append(inventoryHint);
+  }
+
+  if (currentRoomNumber() === 6 && objectId === "basementDoor" && currentRoomState().complete) {
+    const openButton = createActionButton("EXIT", () => {
+      window.location.href = "exit.html";
+    });
+    actions.append(openButton);
   }
 }
 
@@ -546,6 +552,32 @@ function createComputerAction(action) {
   form.addEventListener("submit", (event)=>{ event.preventDefault(); runCustomAction(action.type, `${username.value.trim()}||${password.value.trim()}`); });
   return form;
 }
+
+function createRoom6LockAction(action) {
+  const wrap = document.createElement("div");
+  wrap.className = "room6-lock-ui";
+
+  const slotsWrap = document.createElement("div");
+  slotsWrap.className = "room6-slots";
+
+  const sequence = currentRoomState().flags.room6Sequence || [];
+  for (let index = 0; index < 5; index += 1) {
+    const slot = document.createElement("div");
+    slot.className = "room6-slot";
+    slot.textContent = sequence[index] ? displayItemName(sequence[index]) : `Slot ${index + 1}`;
+    slotsWrap.append(slot);
+  }
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "action-button";
+  button.textContent = action.label;
+  button.disabled = sequence.length < 5;
+  button.addEventListener("click", () => runCustomAction(action.type));
+
+  wrap.append(slotsWrap, button);
+  return wrap;
+}
 function normaliseEntry(value) {
   return value.replace(/\s+/g, " ").toUpperCase();
 }
@@ -597,6 +629,11 @@ function inspectObject(objectId) {
   }
 
   const inspectText = currentRoom().objects[objectId].inspect || "You do not notice anything else yet.";
+  if (currentRoomNumber() === 6 && objectId === "basementDoor" && currentRoomState().complete) {
+    document.getElementById("object-description").textContent = "You hear a clicking noise: the door unlocks!";
+    setStatus("Inspected object.");
+    return;
+  }
   document.getElementById("object-description").textContent = inspectText;
   setStatus("Inspected object.");
 }
@@ -856,12 +893,26 @@ function runCustomAction(actionType, entry = "") {
 
   if (actionType === "room6-keyholes") {
     const requiredKeys = ["key 2", "key 1", "key 4", "small silver key", "gold key"];
+    const sequence = currentRoomState().flags.room6Sequence || [];
     const missing = requiredKeys.filter((item) => !state.inventory.includes(item));
     if (missing.length > 0) {
       setStatus(`You are missing: ${missing.map((item) => displayItemName(item)).join(", ")}.`, true);
       return;
     }
-    completeRoom();
+    if (sequence.length < 5) {
+      setStatus("Fill all 5 slots before checking.", true);
+      return;
+    }
+    const isCorrect = requiredKeys.every((item, idx) => sequence[idx] === item);
+    if (isCorrect) {
+      completeRoom();
+      setStatus("You hear a clicking noise as something unlocks.");
+      return;
+    }
+    currentRoomState().flags.room6Sequence = [];
+    saveState();
+    renderActions("keyholes");
+    setStatus("Nothing happens. Try again.", true);
   }
 }
 
@@ -872,6 +923,9 @@ function completeRoom() {
   state.unlockedRoom = Math.max(state.unlockedRoom, Math.min(roomNumber + 1, ROOM_COUNT));
   saveState();
   updateRoomLocks();
+  if (currentRoomNumber() === 6) {
+    renderActions("basementDoor");
+  }
   setStatus(currentRoom().completeMessage);
 }
 
@@ -903,6 +957,10 @@ function renderInventory() {
 
 
 function selectInventoryItem(item) {
+  if (currentRoomNumber() === 6 && selectedPanelKind === "room" && selectedObjectId === "keyholes") {
+    tryAddRoom6Key(item);
+    return;
+  }
   if (selectedPanelKind === "room" && selectedObjectId) {
     useItemOnObject(item, selectedObjectId);
     return;
@@ -937,6 +995,27 @@ function selectInventoryItem(item) {
 
   renderInventory();
   setStatus(`Opened ${displayItemName(item)}.`);
+}
+
+function tryAddRoom6Key(item) {
+  const allowed = ["key 2", "key 1", "key 4", "small silver key", "gold key"];
+  if (!allowed.includes(item)) {
+    setStatus("That key does not fit this mechanism.", true);
+    return;
+  }
+  const sequence = currentRoomState().flags.room6Sequence || [];
+  if (sequence.includes(item)) {
+    setStatus("That key is already in a slot.", true);
+    return;
+  }
+  if (sequence.length >= 5) {
+    setStatus("All 5 slots are already filled. Press Check.", true);
+    return;
+  }
+  currentRoomState().flags.room6Sequence = [...sequence, item];
+  saveState();
+  renderActions("keyholes");
+  setStatus(`${displayItemName(item)} slides into slot ${sequence.length + 1}.`);
 }
 
 function showObjectPanel() {

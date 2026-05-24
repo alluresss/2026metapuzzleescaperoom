@@ -115,7 +115,7 @@ const roomData = {
   room4: {
     title: "Living Room",
     startStatus: "The living room lights are dim. Invisible ink from earlier may reveal what matters.",
-    completeMessage: "Key 4 turns in the living room door, opening the way to the master bedroom.",
+    completeMessage: "Large Gold Key turns in the living room door, opening the way to the master bedroom.",
     objects: {
       livingTv: {
         name: "TV",
@@ -577,7 +577,7 @@ function collectItem(item) {
   renderVisibleObjects();
   renderInventory();
   renderActions(selectedObjectId);
-  setStatus(`Added ${item} to your inventory.`);
+  setStatus(`Added ${displayItemName(item)} to your inventory.`);
 }
 
 function useItemOnObject(item, objectId) {
@@ -749,7 +749,7 @@ function runCustomAction(actionType, entry = "") {
   if (actionType === "room4-drawers") {
     roomState.flags.drawersOpen = true;
     addInventoryItem("key 1");
-    setStatus("The code 2651 opens the drawers. Inside is a key labelled 1.");
+    setStatus("The code 2651 opens the drawers. Inside is Small Bronze Key.");
     return;
   }
 
@@ -783,7 +783,7 @@ function runCustomAction(actionType, entry = "") {
       return;
     }
     addInventoryItem("key 2");
-    setStatus("The nightstand opens with 262. Inside is a key labelled 2.");
+    setStatus("The nightstand opens with 262. Inside is Key 2.");
     return;
   }
 
@@ -800,7 +800,7 @@ function runCustomAction(actionType, entry = "") {
     const requiredKeys = ["key 2", "key 1", "key 4", "small silver key", "gold key"];
     const missing = requiredKeys.filter((item) => !state.inventory.includes(item));
     if (missing.length > 0) {
-      setStatus(`You are missing: ${missing.join(", ")}.`, true);
+      setStatus(`You are missing: ${missing.map((item) => displayItemName(item)).join(", ")}.`, true);
       return;
     }
     completeRoom();
@@ -860,7 +860,7 @@ function selectInventoryItem(item) {
   selectedPanelKind = "inventory";
   showObjectPanel();
   document.querySelectorAll(".room-object").forEach((button) => button.classList.remove("selected"));
-  document.getElementById("object-name").textContent = item === "gold key" ? "Gold Key" : capitalize(item);
+  document.getElementById("object-name").textContent = displayItemName(item);
   document.getElementById("object-description").textContent = "Inspect this object to learn more.";
 
   const actions = document.getElementById("object-actions");

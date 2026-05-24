@@ -121,7 +121,7 @@ const roomData = {
         name: "TV",
         description: "An large, old TV. When you open the side panel to check, there is  a large keyhole.",
         inspect: "An large, old TV. When you open the side panel to check, there is  a large keyhole.",
-        customActions: [{ label: "Submit port", type: "room4-tv-port", input: { placeholder: "Port" } }],
+        customActions: [{ label: "Submit port", type: "room4-tv-port", input: { placeholder: "Port" }, visibleWhenFlag: "tvPanelOpen" }],
       },
       livingCouch: {
         name: "Couch",
@@ -130,7 +130,7 @@ const roomData = {
       },
       livingDrawers: {
         name: "Old Drawers",
-        description: "The drawers are locked with a numerical keypad.",
+        description: "Some old drawers, locked by a 4 digit code.",
         inspect: "The drawers need the code derived from the invisible annotations in the two old books.",
         customActions: [{ label: "Enter combination", type: "room4-drawers", input: { placeholder: "", answer: "2651", inputMode: "numeric" } }],
       },
@@ -160,13 +160,13 @@ const roomData = {
     objects: {
       nightstand: {
         name: "Nightstand Drawers",
-        description: "The drawers are locked with a 3-digit numerical code.",
+        description: "A nightstand by the bed. It is locked with a 3-digit code.",
         inspect: "A nearby phone shows 6:07. The alarm clock can reveal another time; subtract 345 from 607 to get 262.",
         customActions: [{ label: "Enter combination", type: "room5-nightstand", input: { placeholder: "3-digit code", answer: "262", inputMode: "numeric" } }],
       },
       computer: {
         name: "Locked Computer",
-        description: "A locked computer sitting near the table. It requires a username and password.",
+        description: "A computer, on the side of the table. It is locked and needs a username and password.",
         inspect: "It asks for a username and password. A hidden note gives the username; previous puzzle answers point to OVERRIDE.",
         customActions: [{ label: "Log in", type: "room5-computer", input: { placeholder: "username / password", answer: "admin / OVERRIDE" } }],
       },
@@ -409,6 +409,9 @@ function renderActions(objectId) {
   });
 
   object.customActions?.forEach((action) => {
+    if (action.visibleWhenFlag && !currentRoomState().flags[action.visibleWhenFlag]) {
+      return;
+    }
     if (action.type === "room6-keyholes") {
       actions.append(createRoom6LockAction(action));
       return;
@@ -441,6 +444,10 @@ function renderActions(objectId) {
 }
 
 function isObjectLocked(objectId) {
+  if (currentRoomNumber() === 1 && objectId === "outsideKeypad") {
+    return (currentRoomState().flags.doorbellRings || 0) !== 5;
+  }
+
   const rule = currentRoom().objects[objectId]?.lockedWhen;
   if (!rule) {
     return false;
@@ -626,7 +633,7 @@ function inspectObject(objectId) {
 
   if (currentRoomNumber() === 1 && objectId === "outsideKeypad") {
     const rings = currentRoomState().flags.doorbellRings || 0;
-    const keypadText = rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "A small locked numerical keypad.";
+    const keypadText = rings === 5 ? "The keypad lights up. It is now accepting a 6-digit code." : "The keypad is locked.";
     document.getElementById("object-description").textContent = keypadText;
     setStatus("Inspected object.");
     return;
@@ -1110,7 +1117,7 @@ function inventoryInspect(item) {
 function inventoryDescription(item) {
   const descriptions = {
     "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
-    "crumpled paper": "A small piece of crumpled paper. Nothing seems to be written on it.",
+    "crumpled paper": "A small piece of crumpled paper, suspiciously empty...",
     "small locked box": "A small locked box, opened with a key.",
     "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",

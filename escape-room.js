@@ -285,7 +285,7 @@ function updateRoomLocks() {
   document.querySelectorAll(".room-link").forEach((link, index) => {
     const roomNumber = index + 1;
     const isUnlocked = roomNumber <= state.unlockedRoom;
-    const isDiscovered = roomNumber <= state.unlockedRoom;
+    const isDiscovered = roomNumber <= state.unlockedRoom || roomNumber === currentRoomNumber();
 
     link.hidden = !isDiscovered;
     link.classList.toggle("locked", !isUnlocked);
@@ -937,6 +937,15 @@ function completeRoom() {
   setStatus(currentRoom().completeMessage);
 }
 
+function roomNumberForInventoryItem(item) {
+  for (let roomNumber = 1; roomNumber <= ROOM_COUNT; roomNumber += 1) {
+    if (roomStateByNumber(roomNumber).collected.includes(item)) {
+      return roomNumber;
+    }
+  }
+  return null;
+}
+
 function renderInventory() {
   const list = document.getElementById("inventory-list");
   if (!list) {
@@ -952,14 +961,50 @@ function renderInventory() {
     return;
   }
 
+  const grouped = new Map();
   state.inventory.forEach((item) => {
-    const itemElement = document.createElement("button");
-    itemElement.type = "button";
-    itemElement.className = "inventory-item";
-    itemElement.textContent = displayItemName(item);
-    itemElement.classList.toggle("selected", item === selectedInventoryItem);
-    itemElement.addEventListener("click", () => selectInventoryItem(item));
-    list.append(itemElement);
+    const roomNumber = roomNumberForInventoryItem(item);
+    const key = roomNumber ?? "unknown";
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key).push(item);
+  });
+
+  const orderedGroups = [...grouped.entries()].sort((a, b) => {
+    if (a[0] === "unknown") return 1;
+    if (b[0] === "unknown") return -1;
+    return a[0] - b[0];
+  });
+
+  orderedGroups.forEach(([roomNumber, items]) => {
+    const group = document.createElement("section");
+    group.className = "inventory-group";
+
+    const heading = document.createElement("p");
+    heading.className = "inventory-group-title";
+    if (roomNumber === "unknown") {
+      heading.textContent = "Acquired (Unknown Room)";
+    } else {
+      heading.textContent = `Acquired in Room ${roomNumber}: ${roomData[`room${roomNumber}`].title}`;
+    }
+    group.append(heading);
+
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "inventory-group-items";
+
+    items.forEach((item) => {
+      const itemElement = document.createElement("button");
+      itemElement.type = "button";
+      itemElement.className = "inventory-item";
+      itemElement.textContent = displayItemName(item);
+      itemElement.classList.toggle("selected", item === selectedInventoryItem);
+      itemElement.addEventListener("click", () => selectInventoryItem(item));
+      itemsWrap.append(itemElement);
+    });
+
+    group.append(itemsWrap);
+    list.append(group);
   });
 }
 

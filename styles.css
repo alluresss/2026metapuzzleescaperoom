@@ -293,10 +293,37 @@ h2 {
 
 .action-row,
 .inventory-list {
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.inventory-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.inventory-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.inventory-group-title {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inventory-group-items {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
-  margin-top: 1rem;
 }
 
 .action-button,

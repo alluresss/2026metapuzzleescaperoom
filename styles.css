@@ -164,8 +164,7 @@ h2 {
 }
 
 .room-link.locked {
-  cursor: not-allowed;
-  opacity: 0.42;
+  display: none;
 }
 
 .room-canvas {

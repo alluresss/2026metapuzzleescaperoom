@@ -130,8 +130,8 @@ const roomData = {
       },
       livingDrawers: {
         name: "Old Drawers",
-        description: "Some old drawers, locked by a 4 digit code.",
-        inspect: "The drawers need the code derived from the invisible annotations in the two old books.",
+        description: "Some old drawers. They are locked with a 4-digit code.",
+        inspect: "Some old drawers. They are locked with a 4-digit code.",
         customActions: [{ label: "Enter combination", type: "room4-drawers", input: { placeholder: "", answer: "2651", inputMode: "numeric" } }],
       },
       oldBooks: {
@@ -160,13 +160,13 @@ const roomData = {
     objects: {
       nightstand: {
         name: "Nightstand Drawers",
-        description: "A nightstand by the bed. It is locked with a 3-digit code.",
+        description: "Some drawers by the bed. It's locked with a 3-digit code.",
         inspect: "A nearby phone shows 6:07. The alarm clock can reveal another time; subtract 345 from 607 to get 262.",
         customActions: [{ label: "Enter combination", type: "room5-nightstand", input: { placeholder: "3-digit code", answer: "262", inputMode: "numeric" } }],
       },
       computer: {
         name: "Locked Computer",
-        description: "A computer, on the side of the table. It is locked and needs a username and password.",
+        description: "A locked computer sitting on the table. It needs a username and a password.",
         inspect: "It asks for a username and password. A hidden note gives the username; previous puzzle answers point to OVERRIDE.",
         customActions: [{ label: "Log in", type: "room5-computer", input: { placeholder: "username / password", answer: "admin / OVERRIDE" } }],
       },
@@ -754,8 +754,9 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
-  const targetName = currentRoom().objects[objectId]?.name || objectId;
-  setStatus(`${displayItemName(item)} does not seem to work on the ${targetName.toLowerCase()}.`, true);
+  const roomObjectName = currentRoom().objects[objectId]?.name;
+  const targetName = roomObjectName || displayItemName(objectId);
+  setStatus(`${displayItemName(item)} does not seem to work on ${targetName}.`, true);
 }
 
 function addInventoryItem(item) {
@@ -777,6 +778,13 @@ function runCustomAction(actionType, entry = "") {
   if (actionType === "ring-doorbell") {
     roomState.flags.doorbellRings = (roomState.flags.doorbellRings || 0) + 1;
     saveState();
+    if (currentRoomNumber() === 1 && selectedObjectId === "outsideKeypad") {
+      renderActions("outsideKeypad");
+      const rings = roomState.flags.doorbellRings || 0;
+      document.getElementById("object-description").textContent = rings === 5
+        ? "The keypad lights up. It is now accepting a 6-digit code."
+        : "The keypad is locked.";
+    }
     setStatus("The doorbell rings.");
     return;
   }
@@ -1096,7 +1104,7 @@ function resetObjectPanel() {
 function inventoryInspect(item) {
   const inspections = {
     "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
-    "crumpled paper": "The paper is wrinkled and faintly discolored, as if hidden ink is waiting for the right light.",
+    "crumpled paper": "A small piece of crumpled paper, suspiciously empty.",
     "small locked box": "A small locked box, opened with a key.",
     "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "Its beam is tuned to expose invisible ink on notes and surfaces.",
@@ -1117,7 +1125,7 @@ function inventoryInspect(item) {
 function inventoryDescription(item) {
   const descriptions = {
     "gold key": "A small gold key, exquisitely made. On it, the number 5 is stamped.",
-    "crumpled paper": "A small piece of crumpled paper, suspiciously empty...",
+    "crumpled paper": "A small piece of crumpled paper, suspiciously empty.",
     "small locked box": "A small locked box, opened with a key.",
     "airplane figurine": "A small airplane figurine. You can't figure out why it's in the box, and you try desperately to figure out what type of plane it is...",
     "invisible-ink light": "A handheld light that reveals invisible ink on objects or notes.",

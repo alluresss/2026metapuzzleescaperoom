@@ -119,36 +119,37 @@ const roomData = {
     objects: {
       livingTv: {
         name: "TV",
-        description: "A blank TV with a locked service panel and a row of labelled ports behind it.",
-        inspect: "One port is labelled FOLIO. The panel is locked with a key labelled 1.",
+        description: "An large, old TV. When you open the side panel to check, there is  a large keyhole.",
+        inspect: "An large, old TV. When you open the side panel to check, there is  a large keyhole.",
+        customActions: [{ label: "Submit port", type: "room4-tv-port", input: { placeholder: "Port" } }],
       },
       livingCouch: {
         name: "Couch",
-        description: "A couch with a note tucked deep between the cushions.",
-        inspect: "The handwritten note looks blank unless you use the invisible-ink light.",
+        description: "An old couch; upon closer inspection, there is a small folded note.",
+        inspect: "An old couch; upon closer inspection, there is a small folded note.",
       },
       livingDrawers: {
-        name: "Combination Drawers",
-        description: "A bank of drawers protected by a four-digit combination lock.",
+        name: "Old Drawers",
+        description: "The drawers are locked with a numerical keypad.",
         inspect: "The drawers need the code derived from the invisible annotations in the two old books.",
-        customActions: [{ label: "Enter combination", type: "room4-drawers", input: { placeholder: "4-digit code", answer: "2651", inputMode: "numeric" } }],
+        customActions: [{ label: "Enter combination", type: "room4-drawers", input: { placeholder: "", answer: "2651", inputMode: "numeric" } }],
       },
       oldBooks: {
-        name: "Two Old Books",
-        description: "Two old books sit side by side. Their margins look too clean.",
-        inspect: "Invisible ink reveals strings: 56YGFR, ASE32Q, 9IKLP0, WAZXDE, 8UJKLO9, DRTGVC, U89OKJ, CFGB, SDR43W, I90PLK, MJHB, W34RDS. The annotations resolve to 2651.",
+        name: "Old Book",
+        description: "An old book; it seems suspiciously empty...",
+        inspect: "An old book; it seems suspiciously empty...",
       },
       floorKey: {
-        name: "Key on the Ground",
-        description: "Once the TV lights up, a glint appears on the ground: a key labelled 4.",
-        inspect: "The key was impossible to notice before the TV and lights came on.",
+        name: "Large Gold Key",
+        description: "An exquisitely made large gold key. The number 4 is stamped on it.",
+        inspect: "An exquisitely made large gold key. The number 4 is stamped on it.",
         visibleWhen: { flag: "tvLit" },
-        pickup: { item: "key 4", label: "Pick up key 4" },
+        pickup: { item: "key 4", label: "Pick up Large Gold Key" },
       },
       livingDoor: {
         name: "Locked Door",
-        description: "The living room exit has a keyhole marked 4.",
-        inspect: "It needs key 4.",
+        description: "A huge locked door. It needs a key.",
+        inspect: "A huge locked door. It needs a key.",
       },
     },
   },
@@ -463,6 +464,10 @@ function getFoundObjectAction(objectId) {
     return [{ label: "Take kitchen container", onClick: () => collectItem("kitchen container") }];
   }
 
+  if (currentRoomNumber() === 4 && objectId === "livingCouch" && !state.inventory.includes("small note")) {
+    return [{ label: "PICK UP THE NOTE", onClick: () => collectItem("small note") }];
+  }
+
   return null;
 }
 
@@ -625,29 +630,17 @@ function useItemOnObject(item, objectId) {
   }
 
   if (item === "invisible-ink light" && objectId === "oldBooks") {
-    setStatus("The light reveals the book annotations. Solving them gives the drawer combination 2651.");
+    setStatus("Hastily scribbled in the margins are the annotations: 56YGFR, ASE32Q, 9IKLP0, WAZXDE, 8UJKLO9, DRTGVC, U89OKJ, CFGB, SDR43W, I90PLK, MJHB, W34RDS.");
     return;
   }
 
   if (item === "key 1" && objectId === "livingTv") {
     room4State.flags.tvPanelOpen = true;
     saveState();
-    setStatus("Key 1 opens the TV service panel. One cable port is labelled FOLIO.");
+    setStatus("The side panel swings open. There are a lot of ports. Which port do you plug the cable into?");
     return;
   }
 
-  if (item === "cable" && objectId === "livingTv") {
-    if (!room4State.flags.tvPanelOpen) {
-      setStatus("The cable cannot reach the FOLIO port until the TV panel is unlocked with key 1.", true);
-      return;
-    }
-    room4State.flags.tvLit = true;
-    saveState();
-    renderVisibleObjects();
-    renderActions(selectedObjectId);
-    setStatus("You plug the cable into FOLIO. The TV and lights turn on, revealing key 4 on the ground.");
-    return;
-  }
 
   if (item === "key 4" && objectId === "livingDoor") {
     completeRoom();
@@ -754,8 +747,24 @@ function runCustomAction(actionType, entry = "") {
   if (actionType === "room4-drawers") {
     roomState.flags.drawersOpen = true;
     addInventoryItem("key 1");
-    addInventoryItem("cable");
-    setStatus("The code 2651 opens the drawers. Inside are a key labelled 1 and a cable.");
+    setStatus("The code 2651 opens the drawers. Inside is a key labelled 1.");
+    return;
+  }
+
+  if (actionType === "room4-tv-port") {
+    if (!roomState.flags.tvPanelOpen) {
+      setStatus("The side panel is still locked.", true);
+      return;
+    }
+    if (normaliseEntry(entry) === "FOLIO") {
+      roomState.flags.tvLit = true;
+      saveState();
+      renderVisibleObjects();
+      renderActions(selectedObjectId);
+      setStatus("The whole room lights up.");
+      return;
+    }
+    setStatus(`You try plugging the cable into PORT ${entry}, but nothing happens.`);
     return;
   }
 
@@ -893,9 +902,9 @@ function inventoryInspect(item) {
     "kitchen container": "A small kitchen container that is locked. It needs a key.",
     "red button": "A red button.",
     "small silver key": "A small silver key, exquisitely made. The number 7 is stamped.",
-    "key 1": "The key is labelled 1 and should fit a matching lock.",
-    cable: "Both ends are intact and ready for a labelled port.",
-    "key 4": "The key is labelled 4 and should fit a matching lock.",
+    "small note": "A small piece of paper. On it are the words 'Remember: Buy Groceries'.",
+    "key 1": "A small bronze key, exquisitely made. The number 1 is stamped on it.",
+    "key 4": "An exquisitely made large gold key. The number 4 is stamped on it.",
     "key 2": "The key is labelled 2 and should fit a matching lock.",
   };
   return inspections[item] || "You do not notice anything else yet.";
@@ -913,9 +922,9 @@ function inventoryDescription(item) {
     "kitchen container": "A small kitchen container that is locked. It needs a key.",
     "red button": "",
     "small silver key": "",
-    "key 1": "A numbered key labelled 1.",
-    cable: "A cable that can connect to a matching port.",
-    "key 4": "A numbered key labelled 4.",
+    "small note": "A small piece of paper. On it are the words 'Remember: Buy Groceries'.",
+    "key 1": "A small bronze key, exquisitely made. The number 1 is stamped on it.",
+    "key 4": "An exquisitely made large gold key. The number 4 is stamped on it.",
     "key 2": "A numbered key labelled 2.",
   };
   return descriptions[item] || "An item in your inventory.";
@@ -941,11 +950,20 @@ function displayItemName(item) {
   if (item === "small silver key") {
     return "Small Silver Key";
   }
+  if (item === "small note") {
+    return "Small Note";
+  }
   if (item === "red button") {
     return "Red Button";
   }
   if (item === "kitchen container") {
     return "Kitchen Container";
+  }
+  if (item === "key 1") {
+    return "Small Bronze Key";
+  }
+  if (item === "key 4") {
+    return "Large Gold Key";
   }
   return capitalize(item);
 }

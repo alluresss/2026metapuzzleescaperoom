@@ -974,7 +974,7 @@ function renderInventory() {
   const orderedGroups = [...grouped.entries()].sort((a, b) => {
     if (a[0] === "unknown") return 1;
     if (b[0] === "unknown") return -1;
-    return a[0] - b[0];
+    return b[0] - a[0];
   });
 
   orderedGroups.forEach(([roomNumber, items]) => {

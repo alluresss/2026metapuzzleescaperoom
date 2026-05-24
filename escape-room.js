@@ -285,9 +285,9 @@ function updateRoomLocks() {
   document.querySelectorAll(".room-link").forEach((link, index) => {
     const roomNumber = index + 1;
     const isUnlocked = roomNumber <= state.unlockedRoom;
-    const isDiscovered = roomNumber <= state.unlockedRoom || roomNumber === currentRoomNumber();
+    const isVisible = roomNumber <= state.unlockedRoom;
 
-    link.hidden = !isDiscovered;
+    link.hidden = !isVisible;
     link.classList.toggle("locked", !isUnlocked);
     link.classList.toggle("unlocked", isUnlocked);
     link.setAttribute("aria-disabled", String(!isUnlocked));

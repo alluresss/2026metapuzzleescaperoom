@@ -161,13 +161,13 @@ const roomData = {
       nightstand: {
         name: "Nightstand Drawers",
         description: "Some drawers by the bed. It's locked with a 3-digit code.",
-        inspect: "A nearby phone shows 6:07. The alarm clock can reveal another time; subtract 345 from 607 to get 262.",
+        inspect: "The drawers are still code-locked. The clue is the two visible times: 6:07 and 3:45. Use 607 - 345 to get 262.",
         customActions: [{ label: "Enter combination", type: "room5-nightstand", input: { placeholder: "3-digit code", answer: "262", inputMode: "numeric" } }],
       },
       computer: {
         name: "Locked Computer",
         description: "A locked computer sitting on the table. It needs a username and a password.",
-        inspect: "It asks for a username and password. A hidden note gives the username; previous puzzle answers point to OVERRIDE.",
+        inspect: "The login prompt asks for username/password. The lamp note gives ADMIN, and the password is OVERRIDE.",
         customActions: [{ label: "Log in", type: "room5-computer", input: { placeholder: "username / password", answer: "admin / OVERRIDE" } }],
       },
       bed: {
@@ -946,9 +946,6 @@ function completeRoom() {
   state.unlockedRoom = Math.max(state.unlockedRoom, Math.min(roomNumber + 1, ROOM_COUNT));
   saveState();
   updateRoomLocks();
-  if (currentRoomNumber() === 6) {
-    renderActions("basementDoor");
-  }
   setStatus(currentRoom().completeMessage);
 }
 

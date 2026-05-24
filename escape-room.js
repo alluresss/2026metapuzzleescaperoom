@@ -160,31 +160,31 @@ const roomData = {
     objects: {
       nightstand: {
         name: "Nightstand Drawers",
-        description: "The nightstand drawers are locked with a three-digit combination.",
+        description: "The drawers are locked with a 3-digit numerical code.",
         inspect: "A nearby phone shows 6:07. The alarm clock can reveal another time; subtract 345 from 607 to get 262.",
         customActions: [{ label: "Enter combination", type: "room5-nightstand", input: { placeholder: "3-digit code", answer: "262", inputMode: "numeric" } }],
       },
       computer: {
         name: "Locked Computer",
-        description: "A computer login screen blocks the electrical door controls.",
+        description: "A locked computer sitting near the table. It requires a username and password.",
         inspect: "It asks for a username and password. A hidden note gives the username; previous puzzle answers point to OVERRIDE.",
         customActions: [{ label: "Log in", type: "room5-computer", input: { placeholder: "username / password", answer: "admin / OVERRIDE" } }],
       },
       bed: {
         name: "Bed",
-        description: "The bed is unmade. A phone is tangled in the sheets.",
-        inspect: "The phone shows the time 6:07.",
+        description: "You rummage through the bed. Under the pillow, a locked phone is frozen at the time 6:07.",
+        inspect: "You rummage through the bed. Under the pillow, a locked phone is frozen at the time 6:07.",
       },
       alarmClock: {
         name: "Alarm Clock",
-        description: "The alarm clock has buttons labelled RBG, CLEAR, and ENTER.",
-        inspect: "Pressing RBG then ENTER makes the clock glow with the time 3:45.",
-        customActions: [{ label: "Press RBG ENTER", type: "room5-clock" }],
+        description: "An alarm clock sitting on the nightstand. There are 5 buttons.",
+        inspect: "An alarm clock sitting on the nightstand. There are 5 buttons.",
+        customActions: [{ label: "Use buttons", type: "room5-clock" }],
       },
       lamp: {
         name: "Lamp with Keyhole",
-        description: "A bedside lamp has a tiny keyhole labelled 2.",
-        inspect: "A key labelled 2 should open the lamp compartment.",
+        description: "A normal lamp... However, there is a suspicious latch with a keyhole at the back.",
+        inspect: "A normal lamp... However, there is a suspicious latch with a keyhole at the back.",
       },
     },
   },
@@ -480,6 +480,12 @@ function revealHiddenObject(flag, message) {
 }
 
 function createInputAction(action) {
+  if (action.type === "room5-clock") {
+    return createClockAction(action);
+  }
+  if (action.type === "room5-computer") {
+    return createComputerAction(action);
+  }
   const form = document.createElement("form");
   form.className = "input-action";
 
@@ -511,6 +517,35 @@ function createInputAction(action) {
   return form;
 }
 
+
+function createClockAction() {
+  const wrap = document.createElement("div");
+  wrap.className = "input-action";
+  const buttons = ["CLEAR","G","B","R","ENTER"];
+  const presses = [];
+  buttons.forEach((label)=>{
+    wrap.append(createActionButton(label, ()=>{
+      if (label === "CLEAR") { presses.length = 0; runCustomAction("room5-clock","CLEAR"); return; }
+      if (label === "ENTER") { const sequence = `${presses.join("")}ENTER`; presses.length = 0; runCustomAction("room5-clock", sequence); return; }
+      presses.push(label);
+      setStatus(`Pressed: ${presses.join("")}`);
+    }));
+  });
+  return wrap;
+}
+
+function createComputerAction(action) {
+  const form = document.createElement("form");
+  form.className = "input-action";
+  const username = document.createElement("input");
+  username.type = "text"; username.placeholder = "Username";
+  const password = document.createElement("input");
+  password.type = "text"; password.placeholder = "Password";
+  const submit = document.createElement("button"); submit.type = "submit"; submit.className = "action-button"; submit.textContent = action.label;
+  form.append(username,password,submit);
+  form.addEventListener("submit", (event)=>{ event.preventDefault(); runCustomAction(action.type, `${username.value.trim()}||${password.value.trim()}`); });
+  return form;
+}
 function normaliseEntry(value) {
   return value.replace(/\s+/g, " ").toUpperCase();
 }
@@ -636,6 +671,11 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
+  if (item === "invisible-ink light" && objectId === "small folded note") {
+    setStatus("In invisible ink: Username = admin. Password = [illegible]");
+    return;
+  }
+
   if (item === "invisible-ink light" && objectId === "oldBooks") {
     setStatus("Hastily scribbled in the margins are the annotations: 56YGFR, ASE32Q, 9IKLP0, WAZXDE, 8UJKLO9, DRTGVC, U89OKJ, CFGB, SDR43W, I90PLK, MJHB, W34RDS.");
     return;
@@ -657,7 +697,8 @@ function useItemOnObject(item, objectId) {
   if (item === "key 2" && objectId === "lamp") {
     room5State.flags.lampOpen = true;
     saveState();
-    setStatus("Key 2 opens the lamp. A note reads: 'I’m sorry. I can’t help you anymore.' Invisible ink adds: username = admin. Password = [scribbled].");
+    setStatus("The hidden compartment slides open, revealing a folded note.");
+    addInventoryItem("small folded note");
     return;
   }
 
@@ -771,9 +812,21 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room5-clock") {
-    roomState.flags.clockLit = true;
-    saveState();
-    setStatus("RBG ENTER lights the alarm clock, showing 3:45. With the phone's 6:07, 607 - 345 = 262.");
+    const sequence = normaliseEntry(entry).replace(/\s+/g, "");
+    if (sequence === "CLEAR" || sequence === "ENTER") {
+      roomState.flags.clockSequence = "";
+      saveState();
+      setStatus("The button sequence is cleared.");
+      return;
+    }
+    if (sequence === "RBGENTER") {
+      roomState.flags.clockLit = true;
+      roomState.flags.clockSequence = "";
+      saveState();
+      setStatus("The alarm clock lights up, stuck at the time 3:45.");
+      return;
+    }
+    setStatus("Nothing happens.", true);
     return;
   }
 
@@ -783,13 +836,18 @@ function runCustomAction(actionType, entry = "") {
       return;
     }
     addInventoryItem("key 2");
-    setStatus("The nightstand opens with 262. Inside is Key 2.");
+    setStatus("The nightstand opens with 262. Inside is Large Silver Key.");
     return;
   }
 
   if (actionType === "room5-computer") {
     if (!roomState.flags.lampOpen) {
       setStatus("The computer still needs the hidden username clue from the lamp.", true);
+      return;
+    }
+    const [username,password] = entry.split("||");
+    if (normaliseEntry(username||"") !== "ADMIN" || normaliseEntry(password||"") !== "OVERRIDE") {
+      setStatus("That login does not work.", true);
       return;
     }
     completeRoom();
@@ -910,7 +968,8 @@ function inventoryInspect(item) {
     "small note": "A small piece of paper. On it are the words 'Remember: Buy Groceries'.",
     "key 1": "A small bronze key, exquisitely made. The number 1 is stamped on it.",
     "key 4": "An exquisitely made large gold key. The number 4 is stamped on it.",
-    "key 2": "The key is labelled 2 and should fit a matching lock.",
+    "key 2": "A large silver key, exquisitely made. It is stamped with the number 2.",
+    "small folded note": "A small note, on it written 'I'm sorry. I can't help you anymore.' However, it does look a bit suspicious...",
   };
   return inspections[item] || "You do not notice anything else yet.";
 }
@@ -930,7 +989,8 @@ function inventoryDescription(item) {
     "small note": "A small piece of paper. On it are the words 'Remember: Buy Groceries'.",
     "key 1": "A small bronze key, exquisitely made. The number 1 is stamped on it.",
     "key 4": "An exquisitely made large gold key. The number 4 is stamped on it.",
-    "key 2": "A numbered key labelled 2.",
+    "key 2": "A large silver key, exquisitely made. It is stamped with the number 2.",
+    "small folded note": "A small note, on it written 'I'm sorry. I can't help you anymore.' However, it does look a bit suspicious...",
   };
   return descriptions[item] || "An item in your inventory.";
 }
@@ -969,6 +1029,12 @@ function displayItemName(item) {
   }
   if (item === "key 4") {
     return "Large Gold Key";
+  }
+  if (item === "key 2") {
+    return "Large Silver Key";
+  }
+  if (item === "small folded note") {
+    return "Small Folded Note";
   }
   return capitalize(item);
 }

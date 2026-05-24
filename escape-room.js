@@ -413,6 +413,10 @@ function renderActions(objectId) {
       actions.append(createRoom6LockAction(action));
       return;
     }
+    if (action.type === "room5-clock") {
+      actions.append(createClockAction());
+      return;
+    }
     if (action.input) {
       actions.append(createInputAction(action));
       return;
@@ -628,12 +632,16 @@ function inspectObject(objectId) {
     return;
   }
 
-  const inspectText = currentRoom().objects[objectId].inspect || "You do not notice anything else yet.";
-  if (currentRoomNumber() === 6 && objectId === "basementDoor" && currentRoomState().complete) {
-    document.getElementById("object-description").textContent = "You hear a clicking noise: the door unlocks!";
+  if (currentRoomNumber() === 6 && objectId === "basementDoor") {
+    const doorText = currentRoomState().complete
+      ? "The ginormous door is now unlocked. You can finally leave."
+      : "A ginormous door, bigger than any others you've seen. However, it is locked. Nothing you try opens it.";
+    document.getElementById("object-description").textContent = doorText;
     setStatus("Inspected object.");
     return;
   }
+
+  const inspectText = currentRoom().objects[objectId].inspect || "You do not notice anything else yet.";
   document.getElementById("object-description").textContent = inspectText;
   setStatus("Inspected object.");
 }
@@ -740,7 +748,7 @@ function useItemOnObject(item, objectId) {
   }
 
   const targetName = currentRoom().objects[objectId]?.name || objectId;
-  setStatus(`${item === "gold key" ? "Gold Key" : capitalize(item)} does not seem to work on the ${targetName.toLowerCase()}.`, true);
+  setStatus(`${displayItemName(item)} does not seem to work on the ${targetName.toLowerCase()}.`, true);
 }
 
 function addInventoryItem(item) {

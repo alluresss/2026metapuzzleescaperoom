@@ -814,10 +814,6 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room2-drawer") {
-    if (!state.inventory.includes("airplane figurine")) {
-      setStatus("You need the airplane clue before the letter lock makes sense.", true);
-      return;
-    }
     roomState.flags.drawerOpen = true;
     addInventoryItem("invisible-ink light");
     setStatus("AIRBUS opens the drawer. Inside is a light that reveals invisible ink.");
@@ -825,10 +821,6 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room2-door") {
-    if (!roomState.flags.paperRevealed) {
-      setStatus("You have not revealed the note's hidden sentence counts yet.", true);
-      return;
-    }
     completeRoom();
     return;
   }
@@ -908,20 +900,16 @@ function runCustomAction(actionType, entry = "") {
   }
 
   if (actionType === "room5-nightstand") {
-    if (!roomState.flags.clockLit) {
-      setStatus("Find the second time on the alarm clock before solving the nightstand.", true);
-      return;
-    }
+    roomState.flags.clockLit = true;
+    saveState();
     addInventoryItem("key 2");
     setStatus("The nightstand opens with 262. Inside is Large Silver Key.");
     return;
   }
 
   if (actionType === "room5-computer") {
-    if (!roomState.flags.lampOpen) {
-      setStatus("The computer still needs the hidden username clue from the lamp.", true);
-      return;
-    }
+    roomState.flags.lampOpen = true;
+    saveState();
     const [username,password] = entry.split("||");
     if (normaliseEntry(username||"") !== "ADMIN" || normaliseEntry(password||"") !== "OVERRIDE") {
       setStatus("That login does not work.", true);

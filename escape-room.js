@@ -143,7 +143,7 @@ const roomData = {
         name: "Large Gold Key",
         description: "An exquisitely made large gold key. The number 4 is stamped on it.",
         inspect: "An exquisitely made large gold key. The number 4 is stamped on it.",
-        visibleWhen: { flag: "tvLit" },
+        visibleWhen: { allFlags: ["tvLit", "folioAccepted"] },
         pickup: { item: "key 4", label: "Pick up Large Gold Key" },
       },
       livingDoor: {
@@ -322,7 +322,7 @@ function showLockedRoom() {
 function renderVisibleObjects() {
   document.querySelectorAll(".room-object").forEach((button) => {
     const object = currentRoom().objects[button.dataset.object];
-    const visible = !object?.visibleWhen || Boolean(currentRoomState().flags[object.visibleWhen.flag]);
+    const visible = isVisibleByRule(object?.visibleWhen);
     button.hidden = !visible;
     button.disabled = !visible;
   });
@@ -330,7 +330,20 @@ function renderVisibleObjects() {
 
 function isObjectVisible(objectId) {
   const object = currentRoom().objects[objectId];
-  return !object?.visibleWhen || Boolean(currentRoomState().flags[object.visibleWhen.flag]);
+  return isVisibleByRule(object?.visibleWhen);
+}
+
+function isVisibleByRule(rule) {
+  if (!rule) {
+    return true;
+  }
+  if (rule.flag) {
+    return Boolean(currentRoomState().flags[rule.flag]);
+  }
+  if (Array.isArray(rule.allFlags)) {
+    return rule.allFlags.every((flag) => Boolean(currentRoomState().flags[flag]));
+  }
+  return true;
 }
 
 function wireRoomObjects() {
@@ -604,7 +617,7 @@ function canPickup(objectId, item) {
   }
 
   if (item === "key 4") {
-    return Boolean(roomState.flags.tvLit);
+    return isVisibleByRule(currentRoom().objects[objectId]?.visibleWhen);
   }
 
   return true;
@@ -713,7 +726,7 @@ function useItemOnObject(item, objectId) {
     return;
   }
 
-  if (item === "red button" && currentRoomNumber() === 3) {
+  if (item === "red button" && currentRoomNumber() === 3 && objectId === "inventory") {
     completeRoom();
     return;
   }
@@ -861,6 +874,7 @@ function runCustomAction(actionType, entry = "") {
     }
     if (normaliseEntry(entry) === "FOLIO") {
       roomState.flags.tvLit = true;
+      roomState.flags.folioAccepted = true;
       saveState();
       renderVisibleObjects();
       renderActions(selectedObjectId);

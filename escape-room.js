@@ -143,7 +143,7 @@ const roomData = {
         name: "Large Gold Key",
         description: "An exquisitely made large gold key. The number 4 is stamped on it.",
         inspect: "An exquisitely made large gold key. The number 4 is stamped on it.",
-        visibleWhen: { allFlags: ["tvLit", "folioAccepted"] },
+        visibleWhen: { flag: "key4Revealed" },
         pickup: { item: "key 4", label: "Pick up Large Gold Key" },
       },
       livingDoor: {
@@ -749,6 +749,8 @@ function useItemOnObject(item, objectId) {
   if (item === "key 1" && objectId === "livingTv") {
     room4State.flags.tvPanelOpen = true;
     saveState();
+    renderActions("livingTv");
+    document.getElementById("object-description").textContent = currentRoom().objects.livingTv.inspect;
     setStatus("The side panel swings open. There are a lot of ports. Which port do you plug the cable into?");
     return;
   }
@@ -875,6 +877,7 @@ function runCustomAction(actionType, entry = "") {
     if (normaliseEntry(entry) === "FOLIO") {
       roomState.flags.tvLit = true;
       roomState.flags.folioAccepted = true;
+      roomState.flags.key4Revealed = true;
       saveState();
       renderVisibleObjects();
       renderActions(selectedObjectId);

@@ -755,6 +755,10 @@ h2 {
   display: none !important;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .input-action {
   display: flex;
   flex: 1 1 100%;
